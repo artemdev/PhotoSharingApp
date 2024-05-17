@@ -10,4 +10,4 @@ Apply migrations with ```alembic upgrade head```
 
 Create a new branch from main with ```git checkout -b 'feature-name'```
 
-Enjoy and have fun!
+Enjoy and have fun! :)
