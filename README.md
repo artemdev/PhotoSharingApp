@@ -1,4 +1,4 @@
-How to start clone repo with git clone https://github.com/artemdev/PhotoShare.git
+How to start clone repo with git clone [https://github.com/artemdev/PhotoShare.git](https://github.com/artemdev/PhotoSharingApp.git)
 
 Nevigate to server folder with cd ./server
 
