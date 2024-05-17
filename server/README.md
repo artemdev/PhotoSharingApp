@@ -1,7 +1,10 @@
-git clone https://github.com/artemdev/PhotoShare.git
+How to start
+clone repo with **git clone https://github.com/artemdev/PhotoShare.git**
 
-Nevigate to server folder
+Nevigate to server folder with **cd ./server**
 
-Create all services with docker-compose up -d 
+Create all services with  **docker-compose up -d**
 
-Login to virtual environment with poetry shell 
+Run env with **poetry shell**
+
+Enjoy and have fun!
