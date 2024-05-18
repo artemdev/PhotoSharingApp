@@ -2,6 +2,8 @@ How to start clone repo with git clone [https://github.com/artemdev/PhotoSharing
 
 Navigate to the server folder with ```cd ./server```
 
+Add ```.env``` file (from slack) 
+
 Create all services with ```docker-compose up -d```
 
 Run virtual env with ```poetry shell```
