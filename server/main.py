@@ -1,8 +1,10 @@
+import cloudinary
 from fastapi import FastAPI
 import uvicorn
 import redis.asyncio as redis
 from fastapi_limiter import FastAPILimiter
 from src.routes import users, photos, comments
+from src.conf.config import config
 
 app = FastAPI()
 
@@ -21,6 +23,14 @@ async def startup():
 @app.get("/")
 def read_root():
     return {"message": "Hello World"}
+
+
+cloudinary.config(
+    cloud_name=config.CLD_NAME,
+    api_key=config.CLD_API_KEY,
+    api_secret=config.CLD_API_SECRET,
+    secure=True
+)
 
 
 if __name__ == "__main__":
