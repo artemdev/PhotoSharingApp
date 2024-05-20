@@ -1,0 +1,31 @@
+[tool.poetry]
+name = "server"
+version = "0.1.0"
+description = ""
+authors = ["Artem <artem.zimovets@gmail.com>"]
+# readme = "README.md"
+package-mode = false
+
+[tool.poetry.dependencies]
+python = "^3.12"
+unicorn = "^2.0.1.post1"
+fastapi = "^0.111.0"
+sqlalchemy = "^2.0.30"
+alembic = "^1.13.1"
+pydantic = "^2.7.1"
+fastapi-limiter = "^0.1.6"
+uvicorn = "^0.29.0"
+pydantic-settings = "^2.2.1"
+asyncpg = "^0.29.0"
+pylint = "^3.2.0"
+cloudinary = "^1.40.0"
+python-jose = {version = "^3.3.0", extras = ["cryptography"]}
+libgravatar = "^1.0.4"
+fastapi-mail = "^1.4.1"
+passlib = {extras = ["bcript"], version = "^1.7.4"}
+setuptools = "^69.5.1"
+redis = "^5.0.4"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
