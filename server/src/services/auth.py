@@ -1,103 +1,75 @@
-"""
-Module for authentication services.
-
-This module defines an `Auth` class that provides various methods for user authentication and token management.
-An instance of the `Auth` class named `auth_service` is created for authentication purposes.
-
-"""
-
 import pickle
-from typing import Optional
-
-from jose import JWTError, jwt
-from fastapi import HTTPException, status, Depends
-from fastapi.security import OAuth2PasswordBearer
-from passlib.context import CryptContext
 from datetime import datetime, timedelta
-from sqlalchemy.orm import Session
+from typing import Optional
+import redis.asyncio as redis
+from fastapi import Depends, HTTPException, status
+from passlib.context import CryptContext
+from fastapi.security import OAuth2PasswordBearer
+from sqlalchemy.ext.asyncio import AsyncSession
+from jose import JWTError, jwt
 
-from server.src.conf.config import config
-from server.src.database.db import get_db
-from server.src.repository import users as repository_users
-import redis
+from src.conf.config import config
+from src.database.db import get_db
+from src.repository import users as repository_users
+
 
 
 class Auth:
-    """
-    Class containing authentication methods.
-    Attributes:
-    - pwd_context (CryptContext): Password hashing context.
-    - SECRET_KEY (str): Secret key for token generation.
-    - ALGORITHM (str): JWT encryption algorithm.
-    - oauth2_scheme (OAuth2PasswordBearer): OAuth2 password bearer scheme.
-    - r (Redis): Redis instance for caching user data.
 
     """
-
+    Class responsible for authentication and token management.
+    """
     pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-    SECRET_KEY = config.CLD_API_SECRET
-    ALGORITHM = config.ALGORITHM
-    oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
-    r = redis.Redis(host=config.REDIS_DOMAIN, port=config.REDIS_PORT, db=0)
+    SECRET_KEY = config.SECRET_KEY_JWT
+    ALGORITHM = config.ALG
+    cache = redis.from_url(f"redis://{config.REDIS_DOMAIN}:{config.REDIS_PORT}", password=config.REDIS_PASSWORD)
 
     def verify_password(self, plain_password, hashed_password):
         """
-        Verify password hash.
+        Verify the plain password against the hashed password.
 
-        :param plain_password: Plain password.
-        :type plain_password: str
-        :param hashed_password: Hashed password.
-        :type hashed_password: str
-        :return: True if the plain password matches the hashed password, False otherwise.
-        :rtype: bool
-
+        :param plain_password: The plain password to verify.
+        :param hashed_password: The hashed password to compare against.
+        :return: True if the passwords match, False otherwise.
         """
         return self.pwd_context.verify(plain_password, hashed_password)
 
     def get_password_hash(self, password: str):
         """
-        Get password hash.
+        Get the hashed version of the given password.
 
-        :param password: Password.
-        :type password: str
-        :return: Hashed password
-        :rtype: str
-
+        :param password: The password to hash.
+        :return: The hashed password.
         """
         return self.pwd_context.hash(password)
 
+    oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/auth/login")
+
     async def create_access_token(self, data: dict, expires_delta: Optional[float] = None):
         """
-        Create access token.
+        Create an access token.
 
-        :param data: Data to encode in the token.
-        :type data: dict
-        :param expires_delta: Expiry time for the token. Defaults to None.
-        :type expires_delta: float, optional
-        :return: Encoded access token.
-        :rtype: str
+        :param data: The data to include in the token.
+        :param expires_delta: The expiration time for the token.
+        :return: The access token.
 
         """
         to_encode = data.copy()
         if expires_delta:
             expire = datetime.utcnow() + timedelta(seconds=expires_delta)
         else:
-            expire = datetime.utcnow() + timedelta(minutes=45)
+            expire = datetime.utcnow() + timedelta(minutes=15)
         to_encode.update({"iat": datetime.utcnow(), "exp": expire, "scope": "access_token"})
         encoded_access_token = jwt.encode(to_encode, self.SECRET_KEY, algorithm=self.ALGORITHM)
         return encoded_access_token
 
     async def create_refresh_token(self, data: dict, expires_delta: Optional[float] = None):
         """
-        Create refresh token.
+        Create a refresh token.
 
-        :param data: Data to encode in the token.
-        :type data: dict
-        :param expires_delta: Expiry time for the token. Defaults to None.
-        :type expires_delta: float, optional
-        :return: Encoded refresh token.
-        :rtype: str
-
+        :param data: The data to include in the token.
+        :param expires_delta: The expiration time for the token.
+        :return: The refresh token.
         """
         to_encode = data.copy()
         if expires_delta:
@@ -110,16 +82,10 @@ class Auth:
 
     async def decode_refresh_token(self, refresh_token: str):
         """
-        Decode refresh token.
+        Decode the refresh token.
 
-        :param refresh_token: Refresh token to decode.
-        :type refresh_token: str
-        :return: Email associated with the refresh token.
-        :rtype: str
-
-        Raises:
-        HTTPException: If the token is invalid.
-
+        :param refresh_token: The refresh token to decode.
+        :return: The decoded token.
         """
         try:
             payload = jwt.decode(refresh_token, self.SECRET_KEY, algorithms=[self.ALGORITHM])
@@ -130,36 +96,13 @@ class Auth:
         except JWTError:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='Could not validate credentials')
 
-    def create_email_token(self, data: dict):
+    async def get_current_user(self, token: str = Depends(oauth2_scheme), db: AsyncSession = Depends(get_db)):
         """
-        Create email verification token.
+        Get the current user based on the access token.
 
-        :param data: Data to encode in the token.
-        :type data: dict
-        :return: Encoded email verification token.
-        :rtype: str
-
-        """
-        to_encode = data.copy()
-        expire = datetime.utcnow() + timedelta(days=7)
-        to_encode.update({"iat": datetime.utcnow(), "exp": expire})
-        token = jwt.encode(to_encode, self.SECRET_KEY, algorithm=self.ALGORITHM)
-        return token
-
-    async def get_current_user(self, token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
-        """
-        Get current user from token.
-
-        :param token: Authentication token. Defaults to Depends(oauth2_scheme).
-        :type token: str
+        :param token: The access token.
         :param db: The database session.
-        :type db: Session
-        :return: Current user details.
-        :rtype: User model
-
-        Raises:
-        HTTPException: If the token is invalid or user is not found.
-
+        :return: The current user.
         """
         credentials_exception = HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -168,7 +111,6 @@ class Auth:
         )
 
         try:
-            # Decode JWT
             payload = jwt.decode(token, self.SECRET_KEY, algorithms=[self.ALGORITHM])
             if payload['scope'] == 'access_token':
                 email = payload["sub"]
@@ -178,29 +120,41 @@ class Auth:
                 raise credentials_exception
         except JWTError as e:
             raise credentials_exception
-        user = self.r.get(f"user:{email}")
+
+        user_hash = str(email)
+        user = await self.cache.get(user_hash)
+
         if user is None:
+            print("User from DB")
             user = await repository_users.get_user_by_email(email, db)
             if user is None:
                 raise credentials_exception
-            self.r.set(f"user:{email}", pickle.dumps(user))
-            self.r.expire(f"user:{email}", 900)
+            await self.cache.set(user_hash, pickle.dumps(user))
+            await self.cache.expire(user_hash, 600)
         else:
+            print("User from cache")
             user = pickle.loads(user)
         return user
 
+    def create_email_token(self, data: dict):
+        """
+        Create a token for email verification.
+
+        :param data: The data to include in the token.
+        :return: The email verification token.
+        """
+        to_encode = data.copy()
+        expire = datetime.utcnow() + timedelta(days=1)
+        to_encode.update({"iat": datetime.utcnow(), "exp": expire})
+        token = jwt.encode(to_encode, self.SECRET_KEY, algorithm=self.ALGORITHM)
+        return token
+
     async def get_email_from_token(self, token: str):
         """
-        Get email from token.
+        Get the email address from the email verification token.
 
-        :param token: Token to decode.
-        :type token: dict
-        :return: Email extracted from the token.
-        :rtype: str
-
-        Raises:
-        HTTPException: If the token is invalid.
-
+        :param token: The email verification token.
+        :return: The email address.
         """
         try:
             payload = jwt.decode(token, self.SECRET_KEY, algorithms=[self.ALGORITHM])
@@ -213,4 +167,3 @@ class Auth:
 
 
 auth_service = Auth()
-
