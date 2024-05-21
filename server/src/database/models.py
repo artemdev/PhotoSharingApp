@@ -8,10 +8,9 @@ from sqlalchemy.orm import declarative_base
 Base = declarative_base()
 
 tags_pictures = Table('tags_pictures', Base.metadata,
-                      Column('picture_id', Integer, ForeignKey('pictures.id', ondelete="CASCADE")),
-                      Column('tag_id', Integer, ForeignKey('tags.id', ondelete="CASCADE"))
+                      Column('picture_id', Integer, ForeignKey('pictures.id')),
+                      Column('tag_id', Integer, ForeignKey('tags.id'))
                       )
-
 
 
 class Role(enum.Enum):
@@ -34,17 +33,9 @@ class User(Base):
     created_at = Column('created_at', DateTime, default=func.now())
     updated_at = Column('updated_at', DateTime, default=func.now())
 
-
-class Tag(Base):
-    __tablename__ = "tags"
-
-    id = Column(Integer, primary_key=True)
-    name = Column(String(50), nullable=False, unique=True)
-    pictures = relationship(
-        "Picture",
-        secondary=tags_pictures,
-        back_populates="tags",
-    )
+    # Adding back_populates for relationships
+    pictures = relationship("Picture", back_populates="user")
+    comments = relationship("Comment", back_populates="user")
 
 
 class Picture(Base):
@@ -55,13 +46,17 @@ class Picture(Base):
     image_url = Column(String(255), nullable=False, unique=True, index=True)
     user_id = Column(Integer, ForeignKey('users.id', ondelete="CASCADE"))
     description = Column(String, nullable=True)
+
+    # Define the user relationship
     user = relationship("User", back_populates="pictures")
+
     tags = relationship(
         "Tag",
         secondary=tags_pictures,
         back_populates="pictures",
         passive_deletes=True
     )
+
     comments = relationship('Comment', back_populates='picture')
 
 
@@ -69,11 +64,24 @@ class Comment(Base):
     __tablename__ = "comments"
 
     id = Column(Integer, primary_key=True)
-    text = Column(String(255), nullable=False)
+    text = Column(String(50), nullable=False)
     user_id = Column(Integer, ForeignKey('users.id', ondelete="CASCADE"))
     picture_id = Column(Integer, ForeignKey('pictures.id', ondelete="CASCADE"))
-    created_at = Column(DateTime, default=func.now())
-    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+    created_at = Column('created_at', DateTime, default=func.now())
+    updated_at = Column('updated_at', DateTime, default=func.now())
 
     user = relationship("User", back_populates="comments")
     picture = relationship("Picture", back_populates="comments")
+
+
+class Tag(Base):
+    __tablename__ = "tags"
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String(50), nullable=False)
+
+    pictures = relationship(
+        "Picture",
+        secondary=tags_pictures,
+        back_populates="tags"
+    )
