@@ -1,23 +1,5 @@
-from pydantic import BaseModel, field_validator, Field, EmailStr
-from datetime import datetime
+from pydantic import BaseModel, Field
 from typing import List, Optional
-
-
-class PictureBase(BaseModel):
-    description: str = None
-    tags: str = None
-    qr_code_url: str = None
-
-
-class PictureUpload(BaseModel):
-    id: int
-    image_url: str
-    qr_code_url: str
-    description: str
-    tags: List[str]
-
-    class Config:
-        orm_mode = True
 
 
 class UserModel(BaseModel):
@@ -26,14 +8,23 @@ class UserModel(BaseModel):
     password: str = Field(min_length=6, max_length=10)
 
 
+class PictureUpload(BaseModel):
+    description: Optional[str] = None
+    tags: Optional[List[str]] = []
+
+    class Config:
+        orm_mode = True
+
+
 class PictureUpdate(BaseModel):
     description: Optional[str] = None
-    tags: Optional[List[str]] = None
+    tags: Optional[List[str]] = []
 
 
 class PictureResponse(BaseModel):
     id: int
     image_url: str
+    qr_code_url: Optional[str]
     description: Optional[str]
     tags: List[str]
 

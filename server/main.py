@@ -6,6 +6,7 @@ from fastapi_limiter import FastAPILimiter
 from src.routes import users, photos, comments
 from src.conf.config import config
 
+
 app = FastAPI()
 
 # test3
