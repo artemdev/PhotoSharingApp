@@ -1,11 +1,5 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from typing import List, Optional
-
-
-class UserModel(BaseModel):
-    username: str = Field(min_length=5, max_length=16)
-    email: str
-    password: str = Field(min_length=6, max_length=10)
 
 
 class PictureUpload(BaseModel):

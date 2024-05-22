@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from server.src.database.models import Picture, User, Tag, Comment
 from server.src.services.cloudinary import upload_picture
-from server.src.schemas import PictureUpload, PictureUpdate
+from src.schemas.photos import PictureUpload, PictureUpdate
 from typing import List, Optional
 from server.src.database.models import Picture, Tag
 
