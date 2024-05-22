@@ -11,7 +11,6 @@ tags_pictures = Table('tags_pictures', Base.metadata,
 )
 
 
-
 class Role(enum.Enum):
     admin = "admin"
     moderator = "moderator"
@@ -35,20 +34,9 @@ class User(Base):
     pictures = relationship("Picture", back_populates="user")
     comments = relationship("Comment", back_populates="user")
 
-
-class Tag(Base):
-    __tablename__ = "tags"
-
-    id = Column(Integer, primary_key=True)
-
-    name = Column(String(50), nullable=False)
-
-    pictures = relationship(
-        "Picture",
-        secondary=tags_pictures,
-        back_populates="tags"
-
-    )
+    # Adding back_populates for relationships
+    pictures = relationship("Picture", back_populates="user")
+    comments = relationship("Comment", back_populates="user")
 
 
 class Picture(Base):
@@ -61,7 +49,9 @@ class Picture(Base):
     user_id = Column(Integer, ForeignKey('users.id', ondelete="CASCADE"))
     description = Column(String, nullable=True)
 
+    # Define the user relationship
     user = relationship("User", back_populates="pictures")
+
     tags = relationship(
         "Tag",
         secondary=tags_pictures,
@@ -69,6 +59,7 @@ class Picture(Base):
         back_populates="pictures",
         passive_deletes=True
     )
+
     comments = relationship('Comment', back_populates='picture')
 
 
@@ -81,6 +72,21 @@ class Comment(Base):
     user_id = Column(Integer, ForeignKey('users.id', ondelete="CASCADE"))
     user = relationship("User", backref="comments")
     picture_id = Column(Integer, ForeignKey('pictures.id', ondelete="CASCADE"))
-    picture = relationship("Picture", backref="comments")
-    created_at = Column(DateTime, default=func.now())
-    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+    created_at = Column('created_at', DateTime, default=func.now())
+    updated_at = Column('updated_at', DateTime, default=func.now())
+
+    user = relationship("User", back_populates="comments")
+    picture = relationship("Picture", back_populates="comments")
+
+
+class Tag(Base):
+    __tablename__ = "tags"
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String(50), nullable=False)
+
+    pictures = relationship(
+        "Picture",
+        secondary=tags_pictures,
+        back_populates="tags"
+    )

@@ -1,17 +1,31 @@
-from server.src.schemas import PictureUpload, PictureResponse, PictureUpdate
+from sqlalchemy.future import select
+from server.src.database.models import User, Picture
+from src.schemas.photos import PictureUpload, PictureResponse, PictureUpdate
 from server.src.repository import photos as repository_pictures
-from typing import List
-from fastapi import APIRouter, Depends, File, UploadFile, HTTPException
+from fastapi import APIRouter, Depends, UploadFile, File, Form, HTTPException
 from sqlalchemy.orm import Session
-from src.database.db import get_db
-from src.schemas import PictureUpload
+from sqlalchemy.ext.asyncio import AsyncSession
+from server.src.database.db import get_db
+from src.schemas.photos import PictureUpload
+from server.src.services.auth import auth_service
+from typing import List, Optional
+import logging
+
+logging.basicConfig()
+logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
+
 
 router = APIRouter(prefix='/photos', tags=['photos'])
 
 
 @router.post("/", response_model=PictureUpload)
-async def post_picture(description: str, tags: List[str], file: UploadFile = File(...), db: Session = Depends(get_db)):
-
+async def post_picture(
+    file: UploadFile = File(...),
+    description: Optional[str] = Form(None),
+    tags: List[str] = [],
+    current_user: User = Depends(auth_service.get_current_user),
+    db: Session = Depends(get_db)
+):
     """
     Route handler for uploading pictures.
     This function handles POST requests to '/pictures/' for uploading new pictures.
@@ -26,13 +40,13 @@ async def post_picture(description: str, tags: List[str], file: UploadFile = Fil
     :rtype: Picture model
 
     """
-    picture = await repository_pictures.post_picture(description, tags, file.file, db)
+    picture = await repository_pictures.post_picture(description, tags, current_user.id, file.file, db)
     return picture
 
 @router.get("/{picture_id}", response_model=PictureResponse)
 # async def get_picture(picture_id: int, db: Session = Depends(get_db),
 #                       current_user: User = Depends(auth_service.get_current_user)):
-async def get_picture(picture_id: int, db: Session = Depends(get_db)):
+async def get_picture(picture_id: int, db: AsyncSession = Depends(get_db)):
     """
     Route handler for retrieving a specific picture.
 
@@ -51,18 +65,25 @@ async def get_picture(picture_id: int, db: Session = Depends(get_db)):
     HTTPException: If the picture is not found.
 
     """
-    picture = await repository_pictures.get_picture(picture_id, db)
-    if not picture:
-        raise HTTPException(status_code=404, detail="Picture not found")
-    return picture
+    try:
+        result = await db.execute(select(Picture).filter(Picture.id == picture_id))
+        picture = result.scalars().first()
+        return picture
+    except Exception as e:
+        logging.error(f"Error fetching picture: {e}")
+        raise
+
 
 @router.put("/{picture_id}", response_model=PictureResponse)
 async def update_picture(
     picture_id: int,
-    picture_update: PictureUpdate,
+    description: Optional[str] = Form(None),
+    tags: List[str] = [],
+    current_user: User = Depends(auth_service.get_current_user),
     db: Session = Depends(get_db)
 ):
-    picture = await repository_pictures.update_picture(picture_id, picture_update, db)
+
+    picture = await update_picture(picture_id, description, tags, current_user.id, db)
     if not picture:
         raise HTTPException(status_code=404, detail="Picture not found")
     return picture
