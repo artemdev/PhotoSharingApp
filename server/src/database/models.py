@@ -76,14 +76,11 @@ class Picture(Base):
 class Comment(Base):
     __tablename__ = "comments"
 
-    id = Column(Integer, primary_key=True)
-
-    text = Column(String(255), nullable=False)
+    id = Column(Integer, primary_key=True, index=True)
+    text = Column(String(250), nullable=False)
     user_id = Column(Integer, ForeignKey('users.id', ondelete="CASCADE"))
+    user = relationship("User", backref="comments")
     picture_id = Column(Integer, ForeignKey('pictures.id', ondelete="CASCADE"))
+    picture = relationship("Picture", backref="comments")
     created_at = Column(DateTime, default=func.now())
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
-
-    user = relationship("User", back_populates="comments")
-    picture = relationship("Picture", back_populates="comments")
-
