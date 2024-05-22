@@ -1,102 +1,92 @@
+from typing import Optional
+from fastapi import Depends
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 from libgravatar import Gravatar
-from sqlalchemy.orm import Session
 
-from server.src.database.models import User
-from server.src.schemas import UserModel
+from src.database.db import get_db
+from src.database.models import User
+from src.schemas.user import UserSchema
 
 
-async def get_user_by_email(email: str, db: Session) -> User:
+async def get_user_by_email(email: str, db: AsyncSession = Depends(get_db)) -> Optional[User]:
     """
-    Identify a user with the specified email.
+    Retrieves a user from the database by email.
 
-    :param email: The email of the user to identify.
-    :type email: str
-    :param db: The database session.
-    :type db: Session
-    :return: The user with the specified email, or None if it does not exist.
-    :rtype: User | None
-
+    :param email: Email address of the user.
+    :param db: AsyncSession instance for database interaction.
+    :return: Optional[User] if the user is found, otherwise None.
     """
-    return db.query(User).filter(User.email == email).first()
+    stmt = select(User).filter_by(email=email)
+    result = await db.execute(stmt)
+    user = result.scalar_one_or_none()
+    return user
 
 
-async def create_user(body: UserModel, db: Session) -> User:
+async def create_user(body: UserSchema, db: AsyncSession = Depends(get_db)) -> User:
     """
-    Creates a new contact for a specific user.
+    Creates a new user in the database.
 
-    :param body: The data for the user to create.
-    :type body: UserModel
-    :param db: The database session.
-    :type db: Session
-    :return: The newly created user.
-    :rtype: User
+    :param body: UserSchema containing user data.
+    :param db: AsyncSession instance for database interaction.
+    :return: Created User object.
 
     """
     avatar = None
     try:
         g = Gravatar(body.email)
         avatar = g.get_image()
-    except Exception as e:
-        print(e)
-    new_user = User(**body.dict(), avatar=avatar)
+
+    except Exception as err:
+        print(err)
+
+    new_user = User(**body.model_dump(), avatar=avatar)
     db.add(new_user)
-    db.commit()
-    db.refresh(new_user)
+    await db.commit()
+    await db.refresh(new_user)
     return new_user
 
 
-async def update_token(user: User, token: str | None, db: Session) -> None:
+async def update_token(user: User, token: Optional[str], db: AsyncSession):
     """
-    Update the user's token.
+    Updates the refresh token for a user in the database.
 
-    :param user: The user to update the token for.
-    :type user: User
-    :param token: The user's token or None.
-    :type token: str | None
-    :param db: The database session.
-    :type db: Session
-    :return: None.
-    :rtype: None
-
+    :param user: User object to update.
+    :param token: New refresh token.
+    :param db: AsyncSession instance for database interaction.
     """
-
     user.refresh_token = token
-    db.commit()
+    await db.commit()
+    await db.refresh(user)
 
 
-async def confirmed_email(email: str, db: Session) -> None:
+async def confirmed_email(email: str, db: AsyncSession) -> None:
     """
-    Set users.confirmed = True in the users table.
+    Confirms a user's email address in the database.
 
-    :param email: The email of the user to confirm.
-    :type email: str
-    :param db: The database session.
-    :type db: Session
-    :return: None.
-    :rtype: None
-
+    :param email: Email address to confirm.
+    :param db: AsyncSession instance for database interaction.
     """
     user = await get_user_by_email(email, db)
-    user.confirmed = True
-    db.commit()
+    if user:
+        user.confirmed = True
+        await db.commit()
+        await db.refresh(user)
 
 
-async def update_avatar(email, url: str, db: Session) -> User:
+async def update_avatar_url(email: str, url: Optional[str], db: AsyncSession) -> Optional[User]:
     """
-    Update the user's avatar.
+    Updates the avatar URL for a user in the database.
 
-    :param email: The user's email.
-    :type email: str
-    :param url: The user's email.
-    :type url: str
-    :param db: The database session.
-    :type db: Session
-    :return: The user with new avatar.
-    :rtype: User
-
+    :param email: Email address of the user.
+    :param url: New avatar URL.
+    :param db: AsyncSession instance for database interaction.
+    :return: Updated User object if found, otherwise None.
     """
-
     user = await get_user_by_email(email, db)
-    user.avatar = url
-    db.commit()
+    if user:
+        user.avatar = url
+        await db.commit()
+        await db.refresh(user)
+
     return user
