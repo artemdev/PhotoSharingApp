@@ -1,13 +1,13 @@
 from sqlalchemy.future import select
-from server.src.database.models import User, Picture
+from src.database.models import User, Picture
 from src.schemas.photos import PictureUpload, PictureResponse, PictureUpdate
-from server.src.repository import photos as repository_pictures
+from src.repository import photos as repository_pictures
 from fastapi import APIRouter, Depends, UploadFile, File, Form, HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy.ext.asyncio import AsyncSession
-from server.src.database.db import get_db
+from src.database.db import get_db
 from src.schemas.photos import PictureUpload
-from server.src.services.auth import auth_service
+from src.services.auth import auth_service
 from typing import List, Optional
 import logging
 
@@ -42,6 +42,7 @@ async def post_picture(
     """
     picture = await repository_pictures.post_picture(description, tags, current_user.id, file.file, db)
     return picture
+
 
 @router.get("/{picture_id}", response_model=PictureResponse)
 # async def get_picture(picture_id: int, db: Session = Depends(get_db),

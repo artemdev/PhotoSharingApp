@@ -1,7 +1,7 @@
 import cloudinary
 import cloudinary.uploader
 import cloudinary.api
-from server.src.conf.config import config
+from src.conf.config import config
 
 cloudinary.config(
     cloud_name=config.CLD_NAME,
