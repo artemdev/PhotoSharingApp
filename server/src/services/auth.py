@@ -13,7 +13,9 @@ from src.database.db import get_db
 from src.repository import users as repository_users
 
 
+
 class Auth:
+
     """
     Class responsible for authentication and token management.
     """
@@ -50,6 +52,7 @@ class Auth:
         :param data: The data to include in the token.
         :param expires_delta: The expiration time for the token.
         :return: The access token.
+
         """
         to_encode = data.copy()
         if expires_delta:

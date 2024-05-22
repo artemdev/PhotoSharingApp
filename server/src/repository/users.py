@@ -30,11 +30,13 @@ async def create_user(body: UserSchema, db: AsyncSession = Depends(get_db)) -> U
     :param body: UserSchema containing user data.
     :param db: AsyncSession instance for database interaction.
     :return: Created User object.
+
     """
     avatar = None
     try:
         g = Gravatar(body.email)
         avatar = g.get_image()
+
     except Exception as err:
         print(err)
 
@@ -86,4 +88,5 @@ async def update_avatar_url(email: str, url: Optional[str], db: AsyncSession) ->
         user.avatar = url
         await db.commit()
         await db.refresh(user)
+
     return user
