@@ -3,15 +3,14 @@ from fastapi import Depends, HTTPException, UploadFile, File
 from sqlalchemy.orm import Session
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from server.src.database.models import Picture, User, Tag, Comment
-from server.src.services.cloudinary import upload_picture
+from src.database.models import Picture, User, Tag, Comment
+from src.services.cloudinary import upload_picture
 from src.schemas.photos import PictureUpload, PictureUpdate
 from typing import List, Optional
-from server.src.database.models import Picture, Tag
+from src.database.models import Picture, Tag
 
 
 async def post_picture(description: Optional[str], tags: Optional[List[str]], file, user_id, db: Session):
-
     """
     Post a new picture by a specific user.
 
@@ -43,7 +42,6 @@ async def post_picture(description: Optional[str], tags: Optional[List[str]], fi
 
 
 async def get_picture(picture_id: int, db: AsyncSession):
-
     """
     Retrieves a single picture with the specified ID for a specific user.
 
@@ -62,6 +60,7 @@ async def get_picture(picture_id: int, db: AsyncSession):
         result = await db.execute(select(Picture).filter(Picture.id == picture_id))
         picture = result.scalars().first()
         return picture
+
 
 async def update_picture(picture_id: int, update_description, update_tags, db: Session):
     # Retrieve the picture from the database
