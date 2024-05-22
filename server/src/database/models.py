@@ -4,11 +4,12 @@ import enum
 
 Base = declarative_base()
 
-tags_pictures = Table(
-    'tags_pictures', Base.metadata,
+
+tags_pictures = Table('tags_pictures', Base.metadata,
     Column('picture_id', Integer, ForeignKey('pictures.id', ondelete='CASCADE'), primary_key=True),
     Column('tag_id', Integer, ForeignKey('tags.id', ondelete='CASCADE'), primary_key=True)
 )
+
 
 
 class Role(enum.Enum):
@@ -39,30 +40,37 @@ class Tag(Base):
     __tablename__ = "tags"
 
     id = Column(Integer, primary_key=True)
+
     name = Column(String(50), nullable=False)
 
     pictures = relationship(
         "Picture",
         secondary=tags_pictures,
         back_populates="tags"
+
     )
 
 
 class Picture(Base):
     __tablename__ = "pictures"
 
-    id = Column(Integer, primary_key=True)
-    qr_code_url = Column(String(50), nullable=True)
-    image_url = Column(String(50), nullable=False)
+
+    id = Column(Integer, primary_key=True, index=True)
+    qr_code_url = Column(String(255), nullable=True)
+    image_url = Column(String(255), nullable=False, unique=True, index=True)
     user_id = Column(Integer, ForeignKey('users.id', ondelete="CASCADE"))
+    description = Column(String, nullable=True)
 
     user = relationship("User", back_populates="pictures")
     tags = relationship(
         "Tag",
         secondary=tags_pictures,
-        back_populates="pictures"
+
+        back_populates="pictures",
+        passive_deletes=True
     )
-    comments = relationship("Comment", back_populates="picture")
+    comments = relationship('Comment', back_populates='picture')
+
 
 
 class Comment(Base):
