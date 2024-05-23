@@ -40,9 +40,10 @@ async def post_picture(
     :rtype: Picture model
 
     """
-    picture = await repository_pictures.post_picture(description, tags, current_user.id, file.file, db)
-    return picture
+    tags_list = [tag.strip() for tag in tags.split(",") if tag.strip()]
 
+    picture = await repository_pictures.post_picture(description, tags_list, current_user.id, file.file, db)
+    return picture
 
 @router.get("/{picture_id}", response_model=PictureResponse)
 # async def get_picture(picture_id: int, db: Session = Depends(get_db),
@@ -88,3 +89,25 @@ async def update_picture(
     if not picture:
         raise HTTPException(status_code=404, detail="Picture not found")
     return picture
+
+
+async def search_pictures(
+    db: AsyncSession,
+    search_term: Optional[str] = None,
+    tags: Optional[List[str]] = None,
+    page: int = 1,
+    page_size: int = 10
+) -> List[Picture]:
+    query = db.query(Picture)
+
+    if search_term:
+        query = query.filter(Picture.description.ilike(f'%{search_term}%'))
+
+    if tags:
+        query = query.join(Picture.tags).filter(Tag.name.in_(tags))
+
+    offset = (page - 1) * page_size
+    query = query.offset(offset).limit(page_size)
+
+    result = await query.all()
+    return result

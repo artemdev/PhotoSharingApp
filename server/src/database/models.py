@@ -39,29 +39,25 @@ class User(Base):
     comments = relationship("Comment", back_populates="user")
 
 
+
 class Picture(Base):
     __tablename__ = "pictures"
-
 
     id = Column(Integer, primary_key=True, index=True)
     qr_code_url = Column(String(255), nullable=True)
     image_url = Column(String(255), nullable=False, unique=True, index=True)
-    user_id = Column(Integer, ForeignKey('users.id', ondelete="CASCADE"))
     description = Column(String, nullable=True)
-
-    # Define the user relationship
+    user_id = Column(Integer, ForeignKey('users.id', ondelete="CASCADE"))
     user = relationship("User", back_populates="pictures")
-
     tags = relationship(
         "Tag",
         secondary=tags_pictures,
-
         back_populates="pictures",
         passive_deletes=True
     )
-
     comments = relationship('Comment', back_populates='picture')
-
+    created_at = Column(DateTime, default=func.now())
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
 
 
 class Comment(Base):

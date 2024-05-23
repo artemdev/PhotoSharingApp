@@ -1,11 +1,8 @@
-from sqlalchemy import extract, and_
-from fastapi import Depends, HTTPException, UploadFile, File
+from datetime import datetime
 from sqlalchemy.orm import Session
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from src.database.models import Picture, User, Tag, Comment
 from src.services.cloudinary import upload_picture
-from src.schemas.photos import PictureUpload, PictureUpdate
 from typing import List, Optional
 from src.database.models import Picture, Tag
 
@@ -14,30 +11,35 @@ async def post_picture(description: Optional[str], tags: Optional[List[str]], fi
     """
     Post a new picture by a specific user.
 
-    :param picture: The data for the picture to create.
-    :type picture: ContactModel
-    :param user: The user to create the contact for.
-    :type user: User
-    :param Session: The database session.
-    :type Session: Session
+    :param description: The description of the picture.
+    :param tags: A list of tags for the picture.
+    :param file: The file object representing the picture.
+    :param user_id: The ID of the user uploading the picture.
+    :param db: The database session.
     :return: The newly uploaded picture.
-    :rtype: Picture
-
     """
 
     url = upload_picture(file)
-    picture = Picture(image_url=url, description=description, user_id=user_id)
-    # picture = Picture(image_url=url, description=description)
+    picture = Picture(
+        image_url=url,
+        description=description,
+        user_id=user_id,
+        created_at=datetime.datetime(),
+        updated_at=datetime.datetime()
+    )
+
     if tags:
         for tag_name in tags:
-            tag = db.query(Tag).filter(Tag.name == tag_name).first()
+            tag = await db.execute(select(Tag).filter(Tag.name == tag_name))
+            tag = tag.scalar_one_or_none()
             if not tag:
                 tag = Tag(name=tag_name)
                 db.add(tag)
             picture.tags.append(tag)
+
     db.add(picture)
-    db.commit()
-    db.refresh(picture)
+    await db.commit()
+    await db.refresh(picture)
     return picture
 
 
@@ -61,9 +63,21 @@ async def get_picture(picture_id: int, db: AsyncSession):
         picture = result.scalars().first()
         return picture
 
-async def update_picture(picture_id: int, update_description, update_tags, db: Session):
+
+async def update_picture(picture_id: int, update_description: Optional[str], update_tags: Optional[List[str]], db: Session):
+    """
+    Update an existing picture by its ID.
+
+    :param picture_id: The ID of the picture to update.
+    :param update_description: The new description for the picture.
+    :param update_tags: The new tags for the picture.
+    :param db: The database session.
+    :return: The updated picture or None if not found.
+    """
     # Retrieve the picture from the database
-    picture = db.query(Picture).filter(Picture.id == picture_id).first()
+    result = await db.execute(select(Picture).filter(Picture.id == picture_id))
+    picture = result.scalar_one_or_none()
+
     if not picture:
         return None
 
@@ -78,14 +92,41 @@ async def update_picture(picture_id: int, update_description, update_tags, db: S
 
         # Add new tags
         for tag_name in update_tags:
-            tag = db.query(Tag).filter(Tag.name == tag_name).first()
+            result = await db.execute(select(Tag).filter(Tag.name == tag_name))
+            tag = result.scalar_one_or_none()
             if not tag:
                 tag = Tag(name=tag_name)
                 db.add(tag)
-                db.commit()  # Commit to get the tag ID
-                db.refresh(tag)
+                await db.commit()  # Commit to get the tag ID
+                await db.refresh(tag)
             picture.tags.append(tag)
 
-    db.commit()
-    db.refresh(picture)
+    # Update the updated_at timestamp
+    picture.updated_at = datetime.datetime()
+
+    await db.commit()
+    await db.refresh(picture)
     return picture
+
+
+async def search_pictures(
+        db: AsyncSession,
+        search_term: Optional[str] = None,
+        tags: Optional[List[str]] = None,
+        page: int = 1,
+        page_size: int = 10
+) -> List[Picture]:
+    query = db.query(Picture)
+
+    if search_term:
+        query = query.filter(Picture.description.ilike(f'%{search_term}%'))
+
+    if tags:
+        query = query.join(Picture.tags).filter(Tag.name.in_(tags))
+
+    offset = (page - 1) * page_size
+    query = query.offset(offset).limit(page_size)
+
+    result = await query.all()
+    return result
+

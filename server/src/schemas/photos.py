@@ -17,10 +17,10 @@ class PictureUpdate(BaseModel):
 
 class PictureResponse(BaseModel):
     id: int
-    image_url: str
     qr_code_url: Optional[str]
+    image_url: str
     description: Optional[str]
-    tags: List[str]
+    tags: List[TagResponse]
 
     class Config:
         orm_mode = True
