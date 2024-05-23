@@ -15,7 +15,7 @@ class Settings(BaseSettings):
     MAIL_SERVER: str = "smtp.gmail.com"
     REDIS_DOMAIN: str = 'localhost'
     REDIS_PORT: int = 6379
-    REDIS_PASSWORD: str | None = None
+    REDIS_PASSWORD: str = "000000"
     CLD_NAME: str = 'abc'
     CLD_API_KEY: int = 326488457974591
     CLD_API_SECRET: str = "secret"

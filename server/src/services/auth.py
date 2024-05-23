@@ -13,12 +13,14 @@ from src.database.db import get_db
 from src.repository import users as repository_users
 
 
-
 class Auth:
-
     """
     Class responsible for authentication and token management.
     """
+
+    def __init__(self):
+        pass
+
     pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
     SECRET_KEY = config.SECRET_KEY_JWT
     ALGORITHM = config.ALG

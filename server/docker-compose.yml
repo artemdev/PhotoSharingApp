@@ -4,6 +4,7 @@ services:
     image: redis:alpine
     ports:
       - "6379:6379"
+    command: ["redis-server", "--requirepass", "${REDIS_PASSWORD}"]
   postgres:
     image: postgres:16
     environment:

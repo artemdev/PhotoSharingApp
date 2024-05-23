@@ -3,7 +3,7 @@ from fastapi import FastAPI
 import uvicorn
 import redis.asyncio as redis
 from fastapi_limiter import FastAPILimiter
-from src.routes import users, photos, comments, auth
+from src.routes import users, photos, comments, auth, admin
 from src.conf.config import config
 
 
@@ -13,11 +13,19 @@ app.include_router(users.router, prefix='/api')
 app.include_router(photos.router, prefix='/api')
 app.include_router(comments.router, prefix='/api')
 app.include_router(auth.router, prefix='/api')
+app.include_router(admin.router, prefix='/api')
 
 
 @app.on_event("startup")
 async def startup():
-    r = await redis.Redis(host='localhost', port=6379, db=0, encoding="utf-8", decode_responses=True)
+    r = await redis.Redis(
+        host=config.REDIS_DOMAIN,
+        port=config.REDIS_PORT,
+        password=config.REDIS_PASSWORD,
+        db=0,
+        encoding="utf-8",
+        decode_responses=True
+    )
     await FastAPILimiter.init(r)
 
 
