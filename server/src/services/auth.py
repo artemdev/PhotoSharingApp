@@ -13,17 +13,18 @@ from src.database.db import get_db
 from src.repository import users as repository_users
 
 
-
 class Auth:
-
     """
     Class responsible for authentication and token management.
     """
+
+    def __init__(self):
+        pass
+
     pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
     SECRET_KEY = config.SECRET_KEY_JWT
     ALGORITHM = config.ALG
-    # cache = redis.from_url(f"redis://{config.REDIS_DOMAIN}:{config.REDIS_PORT}", password=config.REDIS_PASSWORD)
-    cache = redis.from_url(f"redis://{config.REDIS_DOMAIN}:{config.REDIS_PORT}")
+    cache = redis.from_url(f"redis://{config.REDIS_DOMAIN}:{config.REDIS_PORT}", password=config.REDIS_PASSWORD)
 
     def verify_password(self, plain_password, hashed_password):
         """
@@ -74,10 +75,10 @@ class Auth:
         """
         to_encode = data.copy()
         if expires_delta:
-            expire = datetime.datetime() + timedelta(seconds=expires_delta)
+            expire = datetime.utcnow() + timedelta(seconds=expires_delta)
         else:
-            expire = datetime.datetime() + timedelta(days=7)
-        to_encode.update({"iat": datetime.datetime(), "exp": expire, "scope": "refresh_token"})
+            expire = datetime.utcnow() + timedelta(days=7)
+        to_encode.update({"iat": datetime.utcnow(), "exp": expire, "scope": "refresh_token"})
         encoded_refresh_token = jwt.encode(to_encode, self.SECRET_KEY, algorithm=self.ALGORITHM)
         return encoded_refresh_token
 
