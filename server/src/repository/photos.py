@@ -56,10 +56,9 @@ async def get_picture(picture_id: int, db: AsyncSession):
 
     """
 
-    async def get_picture(picture_id: int, db: AsyncSession):
-        result = await db.execute(select(Picture).filter(Picture.id == picture_id))
-        picture = result.scalars().first()
-        return picture
+    result = await db.execute(select(Picture).filter(Picture.id == picture_id))
+    picture = result.scalars().first()
+    return picture
 
 
 async def update_picture(picture_id: int, update_description, update_tags, db: Session):
