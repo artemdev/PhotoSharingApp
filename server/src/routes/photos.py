@@ -1,113 +1,119 @@
-from sqlalchemy.future import select
 from src.database.models import User, Picture
-from src.schemas.photos import PictureUpload, PictureResponse, PictureUpdate
-from src.repository import photos as repository_pictures
-from fastapi import APIRouter, Depends, UploadFile, File, Form, HTTPException
-from sqlalchemy.orm import Session
+from src.repository.photos import PictureRepository
+from fastapi import UploadFile, File, Form
+import logging
+from fastapi import APIRouter, HTTPException, Query, Depends
+from typing import Optional, List
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.database.db import get_db
-from src.schemas.photos import PictureUpload
 from src.services.auth import auth_service
-from typing import List, Optional
-import logging
+from src.schemas.photos import PictureUpload, PictureResponse
 
 logging.basicConfig()
 logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
-
 
 router = APIRouter(prefix='/photos', tags=['photos'])
 
 
 @router.post("/", response_model=PictureUpload)
 async def post_picture(
-    file: UploadFile = File(...),
-    description: Optional[str] = Form(None),
-    tags: List[str] = [],
-    current_user: User = Depends(auth_service.get_current_user),
-    db: Session = Depends(get_db)
+        file: UploadFile = File(...),
+        description: Optional[str] = Form(None),
+        tags: List[str] = Form(None),
+        current_user: User = Depends(auth_service.get_current_user),
+        db: AsyncSession = Depends(get_db)
 ):
     """
     Route handler for uploading pictures.
-    This function handles POST requests to '/pictures/' for uploading new pictures.
-
-    :param picture: The picture to upload.
-    :type picture: PictureUpload model.
-    :param current_user: The current user.
-    :type current_user: UserModel. Defaults to Depends(auth_service.get_current_user)
-    :param db: The database session.
-    :type db: Session
-    :return: The uploaded picture.
-    :rtype: Picture model
-
     """
-    tags_list = [tag.strip() for tag in tags.split(",") if tag.strip()]
-
-    picture = await repository_pictures.post_picture(description, tags_list, current_user.id, file.file, db)
+    picture = await PictureRepository.post_picture(description, tags, file.file, current_user.id, db)
     return picture
 
+
 @router.get("/{picture_id}", response_model=PictureResponse)
-# async def get_picture(picture_id: int, db: Session = Depends(get_db),
-#                       current_user: User = Depends(auth_service.get_current_user)):
-async def get_picture(picture_id: int, db: AsyncSession = Depends(get_db)):
+async def get_picture(picture_id: int, db: AsyncSession = Depends(get_db), current_user: User = Depends(auth_service.get_current_user)
+):
     """
     Route handler for retrieving a specific picture.
-
-    This function handles GET requests to '/picture/{picture_id}' for retrieving a specific picture.
-
-    :param picture_id: The ID of the picture to retrieve.
-    :type picture_id: int
-    :param current_user: The current user.
-    :type current_user: UserModel. Defaults to Depends(auth_service.get_current_user)
-    :param db: The database session.
-    :type db: Session
-    :return: The retrieved picture data.
-    :rtype: PictureResponse form
-
-    Raises:
-    HTTPException: If the picture is not found.
-
     """
-    try:
-        result = await db.execute(select(Picture).filter(Picture.id == picture_id))
-        picture = result.scalars().first()
-        return picture
-    except Exception as e:
-        logging.error(f"Error fetching picture: {e}")
-        raise
-
-
-@router.put("/{picture_id}", response_model=PictureResponse)
-async def update_picture(
-    picture_id: int,
-    description: Optional[str] = Form(None),
-    tags: List[str] = [],
-    current_user: User = Depends(auth_service.get_current_user),
-    db: Session = Depends(get_db)
-):
-
-    picture = await update_picture(picture_id, description, tags, current_user.id, db)
+    picture = await PictureRepository.get_picture(picture_id, db)
     if not picture:
         raise HTTPException(status_code=404, detail="Picture not found")
     return picture
 
 
+@router.put("/{picture_id}", response_model=PictureResponse)
+async def update_picture(
+        picture_id: int,
+        description: Optional[str] = Form(None),
+        tags: List[str] = Form(None),
+        current_user: User = Depends(auth_service.get_current_user),
+        db: AsyncSession = Depends(get_db)
+):
+    """
+    Route handler for updating a picture.
+    """
+    picture = await PictureRepository.update_picture(picture_id, description, tags, db)
+    if not picture:
+        raise HTTPException(status_code=404, detail="Picture not found")
+    return picture
+
+
+@router.get("/search", response_model=List[PictureResponse])
 async def search_pictures(
-    db: AsyncSession,
-    search_term: Optional[str] = None,
-    tags: Optional[List[str]] = None,
-    page: int = 1,
-    page_size: int = 10
-) -> List[Picture]:
-    query = db.query(Picture)
+        search_term: Optional[str] = Query(None),
+        tag: Optional[str] = Query(None),
+        page: int = Query(1, ge=1),
+        page_size: int = Query(10, ge=1),
+        db: AsyncSession = Depends(get_db),
+        current_user: User = Depends(auth_service.get_current_user)
+):
+    """
+    Route handler for searching pictures.
+    """
+    pictures = await PictureRepository.search_pictures(db, search_term, tag, page, page_size)
+    if not pictures:
+        raise HTTPException(status_code=404, detail="No pictures found")
+    return pictures
 
-    if search_term:
-        query = query.filter(Picture.description.ilike(f'%{search_term}%'))
 
-    if tags:
-        query = query.join(Picture.tags).filter(Tag.name.in_(tags))
+@router.post("/transform/{picture_id}", response_model=PictureResponse)
+async def resize_picture(
+        picture_id: int,
+        width: Optional[int] = Query(None),
+        height: Optional[int] = Query(None),
+        crop: Optional[str] = Query(None),
+        db: AsyncSession = Depends(get_db),
+        current_user: User = Depends(auth_service.get_current_user)
+):
+    """
+    Route handler for resizing a picture.
+    """
+    transformation = {}
+    if width:
+        transformation["width"] = width
+    if height:
+        transformation["height"] = height
+    if crop:
+        transformation["crop"] = crop
 
-    offset = (page - 1) * page_size
-    query = query.offset(offset).limit(page_size)
+    picture = await PictureRepository.resize_picture(picture_id, transformation, db)
+    if not picture:
+        raise HTTPException(status_code=404, detail="Picture not found")
+    return picture
 
-    result = await query.all()
-    return result
+
+@router.post("/transform/{picture_id}/face-detect-crop", response_model=PictureResponse)
+async def crop_picture_face_detection(
+        picture_id: int,
+        db: AsyncSession = Depends(get_db),
+        current_user: User = Depends(auth_service.get_current_user)
+):
+    """
+    Route handler for cropping a picture using face-detection with Cloudinary.
+    """
+    picture = await PictureRepository.crop_picture_face_detection(picture_id, db)
+    if not picture:
+        raise HTTPException(status_code=404, detail="Picture not found")
+
+    return picture
