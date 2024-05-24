@@ -51,7 +51,8 @@ class PictureRepository:
         return picture
 
     @staticmethod
-    async def update_picture(picture_id: int, update_description: Optional[str], update_tags: Optional[List[str]], db: AsyncSession):
+    async def update_picture(picture_id: int, update_description: Optional[str], update_tags: Optional[List[str]],
+                             db: AsyncSession):
         """
         Update an existing picture by its ID.
         """
@@ -162,6 +163,28 @@ class PictureRepository:
         await db.commit()
         await db.refresh(picture)
         return picture
+      
+    @staticmethod
+    async def delete_picture(picture_id: int, db: AsyncSession):
+        """
+        Deletes a single picture with the specified ID from the database.
+        :param picture_id: The ID of the picture to delete.
+        :type picture_id: int
+        :param db: The database session.
+        :type db: Session
+        :return: The deleted picture, or None if it does not exist.
+        :rtype: Picture | None
+        """
+        picture = await db.execute(select(Picture).filter(Picture.id == picture_id))
+        picture = picture.scalar_one_or_none()
+        if not picture:
+            return None
+
+        await db.delete(picture)
+        await db.commit()
+
+        return picture
+
 
     @staticmethod
     async def create_qrcode(picture_id: int, db: AsyncSession):
