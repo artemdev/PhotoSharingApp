@@ -144,3 +144,26 @@ async def crop_picture_face_detection(
         raise HTTPException(status_code=404, detail="Picture not found")
 
     return picture
+
+
+@router.post("/{picture_id}/qrcode", response_model=PictureResponse)
+async def create_qrcode(
+        picture_id: int,
+        db: AsyncSession = Depends(get_db),
+        current_user: User = Depends(auth_service.get_current_user)
+):
+    picture = await PictureRepository.create_qrcode(picture_id, db)
+    if not picture:
+        raise HTTPException(status_code=404, detail="Picture not found")
+
+    return picture
+
+
+@router.get("/{picture_id}/qrcode")
+async def get_qrcode(picture_id: int, db: AsyncSession = Depends(get_db),
+                     current_user: User = Depends(auth_service.get_current_user)):
+    picture = await PictureRepository.get_picture(picture_id, db)
+    if not picture:
+        raise HTTPException(status_code=404, detail="Picture not found")
+
+    return picture.qr_code_url
