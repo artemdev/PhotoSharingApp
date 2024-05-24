@@ -4,18 +4,16 @@ import enum
 
 Base = declarative_base()
 
-
+# Association table for many-to-many relationship between pictures and tags
 tags_pictures = Table('tags_pictures', Base.metadata,
     Column('picture_id', Integer, ForeignKey('pictures.id', ondelete='CASCADE'), primary_key=True),
     Column('tag_id', Integer, ForeignKey('tags.id', ondelete='CASCADE'), primary_key=True)
 )
 
-
 class Role(enum.Enum):
     admin = "admin"
     moderator = "moderator"
     user = "user"
-
 
 class User(Base):
     __tablename__ = "users"
@@ -24,45 +22,34 @@ class User(Base):
     username = Column(String(50), nullable=False)
     password = Column(String(250), nullable=False)
     avatar = Column(String(255), nullable=True)
-    email = Column(String(150), nullable=False)
+    email = Column(String(150), nullable=False, unique=True)  # Email should be unique
     refresh_token = Column(String(255), nullable=True)
     role = Column(Enum(Role), default=Role.user, nullable=True)
     created_at = Column(DateTime, default=func.now())
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
     confirmed = Column(Boolean, default=False, nullable=True)
 
-    pictures = relationship("Picture", back_populates="user")
-    comments = relationship("Comment", back_populates="user")
-
-    # Adding back_populates for relationships
-    pictures = relationship("Picture", back_populates="user")
-    comments = relationship("Comment", back_populates="user")
-
+    pictures = relationship("Picture", back_populates="user", cascade="all, delete-orphan")
+    comments = relationship("Comment", back_populates="user", cascade="all, delete-orphan")
 
 class Picture(Base):
     __tablename__ = "pictures"
 
-
     id = Column(Integer, primary_key=True, index=True)
     qr_code_url = Column(String(255), nullable=True)
     image_url = Column(String(255), nullable=False, unique=True, index=True)
-    user_id = Column(Integer, ForeignKey('users.id', ondelete="CASCADE"))
     description = Column(String, nullable=True)
-
-    # Define the user relationship
+    user_id = Column(Integer, ForeignKey('users.id', ondelete="CASCADE"))
     user = relationship("User", back_populates="pictures")
-
     tags = relationship(
         "Tag",
         secondary=tags_pictures,
-
         back_populates="pictures",
         passive_deletes=True
     )
-
-    comments = relationship('Comment', back_populates='picture')
-
-
+    comments = relationship('Comment', back_populates='picture', cascade="all, delete-orphan")
+    created_at = Column(DateTime, default=func.now())
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
 
 class Comment(Base):
     __tablename__ = "comments"
@@ -70,20 +57,18 @@ class Comment(Base):
     id = Column(Integer, primary_key=True, index=True)
     text = Column(String(250), nullable=False)
     user_id = Column(Integer, ForeignKey('users.id', ondelete="CASCADE"))
-    user = relationship("User", backref="comments")
     picture_id = Column(Integer, ForeignKey('pictures.id', ondelete="CASCADE"))
-    created_at = Column('created_at', DateTime, default=func.now())
-    updated_at = Column('updated_at', DateTime, default=func.now())
+    created_at = Column(DateTime, default=func.now())
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
 
     user = relationship("User", back_populates="comments")
     picture = relationship("Picture", back_populates="comments")
-
 
 class Tag(Base):
     __tablename__ = "tags"
 
     id = Column(Integer, primary_key=True)
-    name = Column(String(50), nullable=False)
+    name = Column(String(50), nullable=False, unique=True)  # Tags should be unique
 
     pictures = relationship(
         "Picture",
