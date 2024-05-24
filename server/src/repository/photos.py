@@ -5,6 +5,7 @@ from datetime import datetime
 import cloudinary.uploader
 from src.database.models import Picture, Tag
 
+
 class PictureRepository:
 
     @staticmethod
@@ -21,16 +22,16 @@ class PictureRepository:
             updated_at=datetime.now()
         )
 
-        if tags:
-            for tag_name in tags:
-                result = await db.execute(select(Tag).filter(Tag.name == tag_name))
-                tag = result.scalar_one_or_none()
-                if not tag:
-                    tag = Tag(name=tag_name)
-                    db.add(tag)
-                    await db.commit()  # Commit to get the tag ID
-                    await db.refresh(tag)
-                picture.tags.append(tag)
+        # if tags:
+        #     for tag_name in tags:
+        #         result = await db.execute(select(Tag).filter(Tag.name == tag_name))
+        #         tag = result.scalar_one_or_none()
+        #         if not tag:
+        #             tag = Tag(name=tag_name)
+        #             db.add(tag)
+        #             await db.commit()  # Commit to get the tag ID
+        #             await db.refresh(tag)
+        #         picture.tags.append(tag)
 
         db.add(picture)
         await db.commit()
@@ -85,7 +86,6 @@ class PictureRepository:
         await db.refresh(picture)
         return picture
 
-
     @staticmethod
     async def search_pictures(
             db: AsyncSession,
@@ -123,7 +123,8 @@ class PictureRepository:
             return None
 
         # Perform the transformation using Cloudinary
-        transformed = cloudinary.uploader.explicit(picture.image_url, **transformation)
+        transformed = cloudinary.uploader.explicit(
+            picture.image_url, **transformation)
         transformed_url = transformed['secure_url']
 
         # Update the picture's image_url with the transformed URL
@@ -146,7 +147,8 @@ class PictureRepository:
             return None
 
         # Perform the face-detection based cropping using Cloudinary
-        transformed = cloudinary.uploader.explicit(picture.image_url, crop="thumb", gravity="face")
+        transformed = cloudinary.uploader.explicit(
+            picture.image_url, crop="thumb", gravity="face")
         transformed_url = transformed['secure_url']
 
         # Update the picture's image_url with the transformed URL

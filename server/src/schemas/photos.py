@@ -6,7 +6,7 @@ from src.schemas.tags import TagResponse
 
 class PictureUpload(BaseModel):
     description: Optional[str] = None
-    tags: Optional[List[str]] = []
+    # tags: Optional[List[str]] = []
 
     class Config:
         orm_mode = True
@@ -23,7 +23,7 @@ class PictureResponse(BaseModel):
     image_url: str
     description: Optional[str]
     user_id: int
-    tags: List[TagResponse]  # Use TagResponse for consistency
+    # tags: List[TagResponse]  # Use TagResponse for consistency
     created_at: datetime
     updated_at: datetime
 
