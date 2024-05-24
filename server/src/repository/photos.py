@@ -85,6 +85,7 @@ class PictureRepository:
         await db.refresh(picture)
         return picture
 
+
     @staticmethod
     async def search_pictures(
             db: AsyncSession,

@@ -21,6 +21,20 @@ class UserResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)  # noqa
 
 
+class UserOut(BaseModel):
+    id: int
+    email: EmailStr
+    role: Role
+    avatar: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+
+class UserRoleUpdate(BaseModel):
+    role: Role
+
+
 class TokenSchema(BaseModel):
     access_token: str
     refresh_token: str
