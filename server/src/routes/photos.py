@@ -59,6 +59,33 @@ async def update_picture(
     return picture
 
 
+@router.delete("/{picture_id}", response_model=PictureResponse)
+async def delete_picture(picture_id: int, db: AsyncSession = Depends(get_db),
+                         current_user: User = Depends(auth_service.get_current_user)):
+    """
+    Route handler for deleting a specific picture.
+
+    This function handles DELETE requests to '/{picture_id}' for deleting a specific picture.
+
+    :param picture_id: The ID of the picture to delete.
+    :type picture_id: int
+    :param db: The database session.
+    :type db: AsyncSession
+    :param current_user: The current user.
+    :type current_user: UserModel. Defaults to Depends(auth_service.get_current_user)
+    :return: The deleted picture data.
+    :rtype: PictureResponse form
+
+    Raises:
+    HTTPException: If the picture is not found.
+    """
+    picture = await PictureRepository.delete_picture(picture_id, db)
+    if not picture:
+        raise HTTPException(status_code=404, detail="Picture not found")
+
+    return picture
+
+
 @router.get("/search", response_model=List[PictureResponse])
 async def search_pictures(
         search_term: Optional[str] = Query(None),
