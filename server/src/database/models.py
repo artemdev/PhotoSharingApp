@@ -55,7 +55,7 @@ class Comment(Base):
     __tablename__ = "comments"
 
     id = Column(Integer, primary_key=True, index=True)
-    text = Column(String(250), nullable=False)
+    text = Column(String, index=True)
     user_id = Column(Integer, ForeignKey('users.id', ondelete="CASCADE"))
     picture_id = Column(Integer, ForeignKey('pictures.id', ondelete="CASCADE"))
     created_at = Column(DateTime, default=func.now())
