@@ -11,21 +11,15 @@ class PictureUpload(BaseModel):
     class Config:
         orm_mode = True
 
-class PictureUpdate(BaseModel):
-    description: Optional[str] = None
-    tags: Optional[List[str]] = []
-
-    class Config:
-        orm_mode = True
-
 class PictureResponse(BaseModel):
     id: int
     image_url: str
     description: Optional[str]
     user_id: int
-    # tags: List[TagResponse]  # Use TagResponse for consistency
+    # tags: Optional[List[]]
     created_at: datetime
     updated_at: datetime
 
     class Config:
         orm_mode = True
+

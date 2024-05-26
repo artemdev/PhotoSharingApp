@@ -1,7 +1,7 @@
 import cloudinary
 import cloudinary.uploader
 import cloudinary.api
-from src.conf.config import config
+from server.src.conf.config import config
 
 cloudinary.config(
     cloud_name=config.CLD_NAME,
@@ -18,3 +18,6 @@ def upload_picture(file):
 
 def transform_picture(url, transformations):
     return cloudinary.CloudinaryImage(url).build_url(**transformations)
+
+
+
