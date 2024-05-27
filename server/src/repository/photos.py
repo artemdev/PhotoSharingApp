@@ -295,3 +295,32 @@ class PictureRepository:
         await db.commit()
         await db.refresh(picture)
         return picture
+
+
+    @staticmethod
+    async def get_tags(picture_id: int, user_id: int, db: AsyncSession):
+        """
+        Retrieve the tags for a specific picture by its ID and user ID.
+
+        :param picture_id: The ID of the picture.
+        :type picture_id: int
+        :param user_id: The ID of the user who owns the picture.
+        :type user_id: int
+        :param db: The database session.
+        :type db: AsyncSession
+        :return: A list of tags associated with the picture.
+        :rtype: List[str]
+        """
+        result = await db.execute(
+            select(Picture)
+            .options(joinedload(Picture.tags))
+            .filter(Picture.id == picture_id, Picture.user_id == user_id)
+        )
+
+        # Call unique() on the result to handle duplicates
+        picture = result.scalars().unique().one_or_none()
+
+        if not picture:
+            return None
+
+        return [tag.name for tag in picture.tags]

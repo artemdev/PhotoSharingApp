@@ -39,7 +39,8 @@ async def search_pictures(
     :return: A list of pictures matching the search criteria.
     :rtype: List[PictureResponse]
     """
-    pictures = await PictureRepository.search_pictures(db=db, search_term=search_term, tag=tag, page=page, page_size=page_size)
+    pictures = await PictureRepository.search_pictures(db=db, search_term=search_term, tag=tag, page=page,
+                                                       page_size=page_size)
     return pictures
 
 
@@ -199,3 +200,29 @@ async def overlay_image(
     if not picture:
         raise HTTPException(status_code=404, detail="Picture not found")
     return picture
+
+
+@router.get("/{picture_id}/tags", response_model=List[str])
+async def get_tags(
+        picture_id: int,
+        db: AsyncSession = Depends(get_db),
+        current_user: User = Depends(auth_service.get_current_user)
+):
+    """
+    Route handler for retrieving the tags of a specific picture.
+
+    :param picture_id: The ID of the picture to get tags for.
+    :type picture_id: int
+    :param db: The database session.
+    :type db: AsyncSession
+    :param current_user: The current authenticated user.
+    :type current_user: User
+    :return: A list of tags associated with the picture.
+    :rtype: List[str]
+    """
+    tags = await PictureRepository.get_tags(picture_id, current_user.id, db)
+
+    if tags is None:
+        raise HTTPException(status_code=404, detail="Picture not found")
+
+    return tags
