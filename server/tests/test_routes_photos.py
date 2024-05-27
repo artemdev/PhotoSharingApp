@@ -64,6 +64,19 @@ async def test_search_pictures(client: AsyncClient):
     assert isinstance(response.json(), list)
 
 
+async def test_search_pictures_by_user(db: AsyncSession, test_picture: Picture, test_user: User):
+    pictures = await PictureRepository.search_pictures(db=db, user_id=test_user.id, page=1, page_size=10)
+    assert len(pictures) > 0
+    assert all(picture.user_id == test_user.id for picture in pictures)
+
+
+async def test_search_pictures_sorted_by_created_at(db: AsyncSession, test_picture: Picture):
+    pictures = await PictureRepository.search_pictures(db=db, page=1, page_size=10)
+    assert len(pictures) > 0
+    sorted_pictures = sorted(pictures, key=lambda pic: pic.created_at, reverse=True)
+    assert pictures == sorted_pictures
+
+
 async def test_post_picture(client: AsyncClient, test_user: User):
     user_token = auth_service.create_access_token(data={"sub": test_user.email})
 

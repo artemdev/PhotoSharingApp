@@ -19,6 +19,7 @@ router = APIRouter(prefix='/photos', tags=['photos'])
 async def search_pictures(
         search_term: Optional[str] = Query(None),
         tag: Optional[str] = Query(None),
+        user_id: Optional[int] = Query(None),
         page: int = Query(1, ge=1),
         page_size: int = Query(10, ge=1),
         db: AsyncSession = Depends(get_db),
@@ -26,23 +27,24 @@ async def search_pictures(
     """
     Route handler for searching pictures.
 
-    :param search_term: The term to search for in picture descriptions.
+    :param search_term: The search term to filter by.
     :type search_term: Optional[str]
-    :param tag: The tag to filter pictures by.
+    :param tag: The tag to filter by.
     :type tag: Optional[str]
+    :param user_id: The ID of the user to filter by.
+    :type user_id: Optional[int]
     :param page: The page number for pagination.
     :type page: int
-    :param page_size: The number of pictures per page for pagination.
+    :param page_size: The number of items per page.
     :type page_size: int
     :param db: The database session.
     :type db: AsyncSession
     :return: A list of pictures matching the search criteria.
     :rtype: List[PictureResponse]
     """
-    pictures = await PictureRepository.search_pictures(db=db, search_term=search_term, tag=tag, page=page,
-                                                       page_size=page_size)
-    return pictures
+    pictures = await PictureRepository.search_pictures(db=db, search_term=search_term, tag=tag, user_id=user_id, page=page, page_size=page_size)
 
+    return pictures
 
 @router.post("/", response_model=PictureResponse)
 async def post_picture(
