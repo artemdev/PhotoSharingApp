@@ -1,5 +1,6 @@
 How to start clone repo with git clone [https://github.com/artemdev/PhotoSharingApp.git](https://github.com/artemdev/PhotoSharingApp.git)
 
+HOW TO RUN SERVER
 Navigate to the server folder with ```cd ./server```
 
 Add ```.env``` file (from slack) 
@@ -11,5 +12,12 @@ Install dependencies with ```poetry install```
 Apply migrations with ```alembic upgrade head```
 
 Create a new branch from main with ```git checkout -b 'feature-name'```
+
+HOW TO RUN CLIENT
+```cd ./client```
+Install npm on your local machine
+```npm install```
+```npm run dev```
+
 
 Enjoy and have fun! :)
