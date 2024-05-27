@@ -76,7 +76,7 @@ export const signIn = async (user) => {
 
 export const signOut = async () => {
     try {
-        await axiosWithToken.post('/auth/logout')
+        // await axiosWithToken.post('/auth/logout')
 
         sessionStorage.removeItem('currentUser')
 
