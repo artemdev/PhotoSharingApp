@@ -22,15 +22,15 @@ class User(Base):
     username = Column(String(50), nullable=False)
     password = Column(String(250), nullable=False)
     avatar = Column(String(255), nullable=True)
-    email = Column(String(150), nullable=False, unique=True)  # Email should be unique
+    email = Column(String(150), nullable=False)
     refresh_token = Column(String(255), nullable=True)
     role = Column(Enum(Role), default=Role.user, nullable=True)
     created_at = Column(DateTime, default=func.now())
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
     confirmed = Column(Boolean, default=False, nullable=True)
 
-    pictures = relationship("Picture", back_populates="user", cascade="all, delete-orphan")
-    comments = relationship("Comment", back_populates="user", cascade="all, delete-orphan")
+    pictures = relationship("Picture", back_populates="user")
+    comments = relationship("Comment", back_populates="user")
 
 class Picture(Base):
     __tablename__ = "pictures"
@@ -68,7 +68,7 @@ class Tag(Base):
     __tablename__ = "tags"
 
     id = Column(Integer, primary_key=True)
-    name = Column(String(50), nullable=False, unique=True)  # Tags should be unique
+    name = Column(String(50), nullable=False, unique=True)
 
     pictures = relationship(
         "Picture",
