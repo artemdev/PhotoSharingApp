@@ -6,14 +6,16 @@ Base = declarative_base()
 
 # Association table for many-to-many relationship between pictures and tags
 tags_pictures = Table('tags_pictures', Base.metadata,
-    Column('picture_id', Integer, ForeignKey('pictures.id', ondelete='CASCADE'), primary_key=True),
-    Column('tag_id', Integer, ForeignKey('tags.id', ondelete='CASCADE'), primary_key=True)
-)
+                      Column('picture_id', Integer, ForeignKey('pictures.id', ondelete='CASCADE'), primary_key=True),
+                      Column('tag_id', Integer, ForeignKey('tags.id', ondelete='CASCADE'), primary_key=True)
+                      )
+
 
 class Role(enum.Enum):
     admin = "admin"
     moderator = "moderator"
     user = "user"
+
 
 class User(Base):
     __tablename__ = "users"
@@ -31,6 +33,7 @@ class User(Base):
 
     pictures = relationship("Picture", back_populates="user", cascade="all, delete-orphan")
     comments = relationship("Comment", back_populates="user", cascade="all, delete-orphan")
+
 
 class Picture(Base):
     __tablename__ = "pictures"
@@ -51,6 +54,7 @@ class Picture(Base):
     created_at = Column(DateTime, default=func.now())
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
 
+
 class Comment(Base):
     __tablename__ = "comments"
 
@@ -63,6 +67,7 @@ class Comment(Base):
 
     user = relationship("User", back_populates="comments")
     picture = relationship("Picture", back_populates="comments")
+
 
 class Tag(Base):
     __tablename__ = "tags"
