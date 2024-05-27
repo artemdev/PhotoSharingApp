@@ -3,21 +3,21 @@ How to start clone repo with git clone [https://github.com/artemdev/PhotoSharing
 ***HOW TO RUN SERVER*** <br /> <br />
 Navigate to the server folder with ```cd ./server```
 
-Add ```.env``` file (from slack) 
-
-Create all services with ```docker-compose up -d```
-
-Run virtual env with ```poetry shell```
-Install dependencies with ```poetry install```
-Apply migrations with ```alembic upgrade head```
+1. Add ```.env``` file (from slack)
+2. Create all services with ```docker-compose up -d```
+3. Run virtual env with ```poetry shell```
+4. Install dependencies with ```poetry install```
+5. Apply migrations with ```alembic upgrade head```
 
 Create a new branch from main with ```git checkout -b 'feature-name'```
 
 ***HOW TO RUN CLIENT*** <br /> <br />
 ```cd ./client```
-Install npm on your local machine
-```npm install```
-```npm run dev```
+1. Install npm on your local machine
+2. ```npm install```
+3. ```npm run dev```
+
+
 
 
 Enjoy and have fun! :)
