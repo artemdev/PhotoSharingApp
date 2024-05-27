@@ -133,6 +133,34 @@ async def update_picture(
     return picture
 
 
+
+@router.delete("/{picture_id}", response_model=PictureResponse)
+async def delete_picture(picture_id: int, db: AsyncSession = Depends(get_db),
+                         current_user: User = Depends(auth_service.get_current_user)):
+    """
+    Route handler for deleting a specific picture.
+
+    This function handles DELETE requests to '/{picture_id}' for deleting a specific picture.
+
+    :param picture_id: The ID of the picture to delete.
+    :type picture_id: int
+    :param db: The database session.
+    :type db: AsyncSession
+    :param current_user: The current user.
+    :type current_user: UserModel. Defaults to Depends(auth_service.get_current_user)
+    :return: The deleted picture data.
+    :rtype: PictureResponse form
+
+    Raises:
+    HTTPException: If the picture is not found.
+    """
+    picture = await PictureRepository.delete_picture(picture_id, db)
+    if not picture:
+        raise HTTPException(status_code=404, detail="Picture not found")
+
+    return picture
+
+
 @router.post("/transform/{picture_id}", response_model=PictureResponse)
 async def resize_picture(
         picture_id: int,
@@ -202,12 +230,15 @@ async def overlay_image(
     return picture
 
 
+  
 @router.get("/{picture_id}/tags", response_model=List[str])
 async def get_tags(
+
         picture_id: int,
         db: AsyncSession = Depends(get_db),
         current_user: User = Depends(auth_service.get_current_user)
 ):
+
     """
     Route handler for retrieving the tags of a specific picture.
 
@@ -226,3 +257,26 @@ async def get_tags(
         raise HTTPException(status_code=404, detail="Picture not found")
 
     return tags
+
+
+  
+@router.post("/{picture_id}/qrcode", response_model=PictureResponse)
+async def create_qrcode(picture_id: int, db: AsyncSession = Depends(get_db),
+                     current_user: User = Depends(auth_service.get_current_user)):
+  
+    picture = await PictureRepository.create_qrcode(picture_id, db)
+    if not picture:
+        raise HTTPException(status_code=404, detail="Picture not found")
+
+    return picture
+
+
+@router.get("/{picture_id}/qrcode")
+async def get_qrcode(picture_id: int, db: AsyncSession = Depends(get_db),
+                     current_user: User = Depends(auth_service.get_current_user)):
+    picture = await PictureRepository.get_picture(picture_id, db)
+    if not picture:
+        raise HTTPException(status_code=404, detail="Picture not found")
+
+    return picture.qr_code_url
+
