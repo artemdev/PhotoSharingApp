@@ -1,3 +1,4 @@
+from sqlalchemy import desc
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.future import select
@@ -169,26 +170,29 @@ class PictureRepository:
             db: AsyncSession,
             search_term: Optional[str] = None,
             tag: Optional[str] = None,
+            user_id: Optional[int] = None,
             page: int = 1,
             page_size: int = 10
     ) -> List[Picture]:
         """
-        Search for pictures based on a search term and/or tag.
+
+        Search for pictures based on search term, tag, and user_id, and sort by created_at.
 
         :param db: The database session.
         :type db: AsyncSession
-        :param search_term: The search term to filter pictures by description.
+        :param search_term: The search term to filter by.
         :type search_term: Optional[str]
-        :param tag: The tag to filter pictures by.
+        :param tag: The tag to filter by.
         :type tag: Optional[str]
+        :param user_id: The ID of the user to filter by.
+        :type user_id: Optional[int]
         :param page: The page number for pagination.
         :type page: int
-        :param page_size: The number of pictures per page for pagination.
+        :param page_size: The number of items per page.
         :type page_size: int
         :return: A list of pictures matching the search criteria.
         :rtype: List[Picture]
         """
-
         query = select(Picture).options(joinedload(Picture.tags))
 
         if search_term:
@@ -196,6 +200,11 @@ class PictureRepository:
 
         if tag:
             query = query.join(Picture.tags).filter(Tag.name == tag)
+
+        if user_id:
+            query = query.filter(Picture.user_id == user_id)
+
+        query = query.order_by(desc(Picture.created_at))
 
         offset = (page - 1) * page_size
         query = query.offset(offset).limit(page_size)
@@ -301,7 +310,6 @@ class PictureRepository:
         await db.commit()
         await db.refresh(picture)
         return picture
-
 
 
     @staticmethod
