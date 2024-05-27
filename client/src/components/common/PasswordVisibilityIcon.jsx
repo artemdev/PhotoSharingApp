@@ -1,5 +1,5 @@
-import { ReactComponent as PasswordVisible } from '../../assets/passwordVisible.svg'
-import { ReactComponent as PasswordHidden } from '../../assets/passwordHidden.svg'
+// import { ReactComponent as PasswordVisible } from '../../assets/passwordVisible.svg'
+// import { ReactComponent as PasswordHidden } from '../../assets/passwordHidden.svg'
 
 export default function PasswordVisibilityIcon({
     showPassword,
@@ -10,9 +10,11 @@ export default function PasswordVisibilityIcon({
     return (
         <>
             {showPassword ? (
-                <PasswordVisible onClick={toggleShowPassword} />
+                <div onClick={toggleShowPassword}> Show pass</div>
             ) : (
-                <PasswordHidden onClick={toggleShowPassword} />
+                <div onClick={toggleShowPassword}> Hide pass</div>
+
+                // <PasswordHidden onClick={toggleShowPassword} />
             )}
         </>
     )

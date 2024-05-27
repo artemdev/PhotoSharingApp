@@ -1,6 +1,7 @@
 import Navbar from 'react-bootstrap/Navbar'
 
 import { signOut } from '../../api'
+import { Button } from 'react-bootstrap'
 
 export default function UserMenu() {
     const username = JSON.parse(sessionStorage.getItem('currentUser'))?.username
@@ -15,12 +16,10 @@ export default function UserMenu() {
             <Navbar.Text className="me-2">Hi, {username}</Navbar.Text>
 
             <Navbar.Text className="me-2">
-                <a href="/games-library">Your games</a>
+                <Button variant="success">Your photos</Button>
             </Navbar.Text>
             <Navbar.Text>
-                <a href="/" onClick={handleSignOut}>
-                    Logout
-                </a>
+                <Button onClick={handleSignOut}>Logout</Button>
             </Navbar.Text>
         </>
     )

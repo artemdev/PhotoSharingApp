@@ -2,7 +2,7 @@ import axios from 'axios'
 
 import GAMES_DB from './db'
 
-axios.defaults.baseURL = 'http://localhost:3001'
+axios.defaults.baseURL = 'http://0.0.0.0:8000/api'
 
 const axiosWithToken = axios.create({
     headers: {
@@ -48,11 +48,8 @@ export const getGamesByName = (name) =>
 export const signUp = async (user) => {
     try {
         const response = await axios.post('/auth/signup', user)
-
-        sessionStorage.setItem(
-            'currentUser',
-            JSON.stringify(response.data.data)
-        )
+        console.log('response', response)
+        sessionStorage.setItem('currentUser', JSON.stringify(response.data))
 
         window.location.reload()
     } catch (error) {
@@ -62,12 +59,14 @@ export const signUp = async (user) => {
 
 export const signIn = async (user) => {
     try {
-        const response = await axios.post('/auth/login', user)
+        const formData = new FormData()
 
-        sessionStorage.setItem(
-            'currentUser',
-            JSON.stringify(response.data.data)
-        )
+        // Assuming `user` is an object with properties `username` and `password`
+        formData.append('username', user.username)
+        formData.append('password', user.password)
+
+        const response = await axios.post('/auth/login', formData)
+        sessionStorage.setItem('currentUser', JSON.stringify(response.data))
 
         window.location.reload()
     } catch (error) {
@@ -83,6 +82,7 @@ export const signOut = async () => {
 
         window.location.reload()
     } catch (error) {
-        alert(error.response.data.message)
+        console.log('error', error)
+        alert(error.message)
     }
 }
