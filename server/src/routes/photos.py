@@ -27,6 +27,7 @@ async def search_pictures(
     """
     Route handler for searching pictures.
 
+
     :param search_term: The search term to filter by.
     :type search_term: Optional[str]
     :param tag: The tag to filter by.
@@ -42,9 +43,11 @@ async def search_pictures(
     :return: A list of pictures matching the search criteria.
     :rtype: List[PictureResponse]
     """
+
     pictures = await PictureRepository.search_pictures(db=db, search_term=search_term, tag=tag, user_id=user_id, page=page, page_size=page_size)
 
     return pictures
+
 
 @router.post("/", response_model=PictureResponse)
 async def post_picture(
