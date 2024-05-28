@@ -174,6 +174,7 @@ class PictureRepository:
             page_size: int = 10
     ) -> List[Picture]:
         """
+
         Search for pictures based on search term, tag, and user_id, and sort by created_at.
 
         :param db: The database session.
@@ -308,6 +309,7 @@ class PictureRepository:
         await db.commit()
         await db.refresh(picture)
         return picture
+
 
     @staticmethod
     async def get_tags(picture_id: int, user_id: int, db: AsyncSession):

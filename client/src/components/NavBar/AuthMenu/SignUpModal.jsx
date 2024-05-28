@@ -28,36 +28,17 @@ export default function SignInForm({ handleClose }) {
             .string()
             .oneOf([yup.ref('password'), null], 'Passwords must match')
             .required(),
-
-        birthday: yup
-            .date()
-            .nullable()
-            .test(
-                'birthday',
-                'Should be greater than 18',
-                function (value, ctx) {
-                    const dob = new Date(value)
-                    const validDate = new Date()
-                    const valid =
-                        validDate.getFullYear() - dob.getFullYear() >= 18
-                    return !valid ? ctx.createError() : valid
-                }
-            )
-            .required(),
     })
 
     const initialValues = {
         username: 'Gamer',
-        password: 'Gamer123$',
-        passwordConfirmation: 'Gamer123$',
-        birthday: moment()
-            .subtract(18, 'years')
-            .format('YYYY-MM-DD')
-            .toString(),
+        password: 'test123$',
+        passwordConfirmation: 'test123$',
+        email: 'artem.zimovets@gmail.com',
     }
 
-    const handleSignUp = async ({ username, password, birthday }) => {
-        const result = await signUp({ username, password, birthday })
+    const handleSignUp = async ({ username, email, password, birthday }) => {
+        const result = await signUp({ username, password, email, birthday })
         if (result) {
             setShowModal(false)
         }
@@ -104,6 +85,26 @@ export default function SignInForm({ handleClose }) {
                                             name="username"
                                             onChange={handleChange}
                                             value={values.username}
+                                        />
+                                    </Col>
+                                </Form.Group>
+
+                                <Form.Group
+                                    as={Row}
+                                    className="mb-3"
+                                    controlId="email"
+                                >
+                                    <Form.Label column sm={3}>
+                                        Email
+                                    </Form.Label>
+
+                                    <Col sm={9}>
+                                        <Form.Control
+                                            type="input"
+                                            placeholder="Email"
+                                            name="email"
+                                            onChange={handleChange}
+                                            value={values.email}
                                         />
                                     </Col>
                                 </Form.Group>
@@ -183,31 +184,6 @@ export default function SignInForm({ handleClose }) {
                                                 showPassword,
                                             }}
                                         />
-                                    </Col>
-                                </Form.Group>
-
-                                <Form.Group
-                                    as={Row}
-                                    className="mb-3"
-                                    controlId="birthday"
-                                >
-                                    <Form.Label column sm={3}>
-                                        Birthday
-                                    </Form.Label>
-
-                                    <Col sm={9}>
-                                        <Form.Control
-                                            type="date"
-                                            value={values.birthday}
-                                            name="birthday"
-                                            placeholder="Birthday"
-                                            isInvalid={!!errors.birthday}
-                                            onChange={handleChange}
-                                        />
-
-                                        <Form.Control.Feedback type="invalid">
-                                            {errors.birthday}
-                                        </Form.Control.Feedback>
                                     </Col>
                                 </Form.Group>
                             </Modal.Body>

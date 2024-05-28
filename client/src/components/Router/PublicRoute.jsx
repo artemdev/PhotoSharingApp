@@ -4,7 +4,7 @@ import ROUTES from '../../routes'
 
 export default function PublicRoute({
     children,
-    redirectTo = ROUTES.GAMES_LIBRARY,
+    redirectTo = ROUTES.PHOTOS_LIBRARY,
     restricted = false,
     ...routeProps
 }) {
