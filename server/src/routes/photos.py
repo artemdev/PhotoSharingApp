@@ -65,7 +65,7 @@ async def post_picture(
     :param description: The description of the picture.
     :type description: Optional[str]
     :param tags: A list of tags associated with the picture.
-    :type tags: List[str]
+    :type tags: List[str] limited 
     :param current_user: The current authenticated user.
     :type current_user: User
     :param db: The database session.
@@ -74,7 +74,7 @@ async def post_picture(
     :rtype: PictureResponse
     """
     try:
-        tags_list = tags[0].split(",") if tags else []
+        tags_list = tags[0].split(",")[:5] if tags else []
         picture = await PictureRepository.post_picture(description, tags_list, file.file, current_user.id, db)
         return picture
 
@@ -131,7 +131,7 @@ async def update_picture(
     :return: The updated picture.
     :rtype: PictureResponse
     """
-    tags_list = tags[0].split(",") if tags else None
+    tags_list = tags[0].split(",")[:5] if tags else None
     picture = await PictureRepository.update_picture(picture_id, description, tags_list, current_user, db)
     if not picture:
         raise HTTPException(status_code=404, detail="Picture not found")
