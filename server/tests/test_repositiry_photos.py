@@ -89,6 +89,7 @@ async def test_update_picture(db: AsyncSession, test_picture: Picture, test_user
     assert len(updated_picture.tags) == 2
 
 
+
 async def test_update_picture_by_owner(db: AsyncSession, test_picture: Picture, test_user: User):
     updated_description = "New description"
     updated_tags = ["tag1", "tag2"]
@@ -130,6 +131,7 @@ async def test_update_picture_unauthorized(db: AsyncSession, test_picture: Pictu
         db=db
     )
     assert updated_picture is None
+
 
 
 async def test_search_pictures(db: AsyncSession, test_picture: Picture):
