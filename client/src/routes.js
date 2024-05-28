@@ -1,7 +1,8 @@
 const ROUTES = {
     MAIN_PAGE: '/',
-    GAMES_LIBRARY: '/games-library',
-    GAME: '/game/:id',
+    PHOTO_LIBRARY: '/photos',
+    PHOTO: '/photos/:id',
+    ADD_PHOTO: '/photos/add',
 }
 
 export default ROUTES

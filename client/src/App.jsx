@@ -7,8 +7,12 @@ import PublicRoute from './components/Router/PublicRoute'
 import ROUTES from './routes'
 
 import MainPage from './components/MainPage'
+import PhotoLibrary from './components/Photos/PhotoLibrary'
+import AddPhoto from './components/Photos/AddPhoto'
+import ShowPhoto from './components/Photos/ShowPhoto'
 import Login from './components/Login'
 import SignUp from './components/MainPage'
+
 import NavBar from './components/NavBar'
 import Loader from './components/Loader'
 
@@ -26,6 +30,21 @@ export default function App() {
                             element={withPublicRoute(<MainPage />, {
                                 restricted: true,
                             })}
+                        />
+
+                        <Route
+                            path={ROUTES.ADD_PHOTO}
+                            element={withPrivateRoute(<AddPhoto />)}
+                        />
+
+                        <Route
+                            path={ROUTES.PHOTO}
+                            element={withPrivateRoute(<ShowPhoto />)}
+                        />
+
+                        <Route
+                            path={ROUTES.PHOTO_LIBRARY}
+                            element={withPrivateRoute(<PhotoLibrary />)}
                         />
 
                         <Route
