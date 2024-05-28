@@ -20,8 +20,8 @@ class CommentRepository:
         return db_comment
 
     @staticmethod
-    async def update_comment(db: AsyncSession, comment_id: int, comment: CommentUpdate, user_id: int) -> Comment:
-        result = await db.execute(select(Comment).filter(Comment.id == comment_id, Comment.user_id == user_id))
+    async def update_comment(db: AsyncSession, comment_id: int, comment: CommentUpdate) -> Comment:
+        result = await db.execute(select(Comment).filter(Comment.id == comment_id))
         db_comment = result.scalars().first()
 
         if not db_comment:
@@ -35,17 +35,13 @@ class CommentRepository:
         return db_comment
 
     @staticmethod
-    async def delete_comment(db: AsyncSession, comment_id: int, user_role: str) -> None:
+    async def delete_comment(db: AsyncSession, comment_id: int) -> None:
         result = await db.execute(select(Comment).filter(Comment.id == comment_id))
         db_comment = result.scalars().first()
 
         if not db_comment:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail="Comment not found")
-
-        if user_role not in ["admin", "moderator"]:
-            raise HTTPException(
-                status_code=403, detail="Not authorized to delete this comment")
 
         await db.delete(db_comment)
         await db.commit()
