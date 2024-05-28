@@ -89,6 +89,51 @@ async def test_update_picture(db: AsyncSession, test_picture: Picture, test_user
     assert len(updated_picture.tags) == 2
 
 
+
+async def test_update_picture_by_owner(db: AsyncSession, test_picture: Picture, test_user: User):
+    updated_description = "New description"
+    updated_tags = ["tag1", "tag2"]
+    updated_picture = await PictureRepository.update_picture(
+        picture_id=test_picture.id,
+        update_description=updated_description,
+        update_tags=updated_tags,
+        user=test_user,
+        db=db
+    )
+    assert updated_picture is not None
+    assert updated_picture.description == updated_description
+    assert set(tag.name for tag in updated_picture.tags) == set(updated_tags)
+
+
+async def test_update_picture_by_admin(db: AsyncSession, test_picture: Picture, admin_user: User):
+    updated_description = "New description by admin"
+    updated_tags = ["admin_tag1", "admin_tag2"]
+    updated_picture = await PictureRepository.update_picture(
+        picture_id=test_picture.id,
+        update_description=updated_description,
+        update_tags=updated_tags,
+        user=admin_user,
+        db=db
+    )
+    assert updated_picture is not None
+    assert updated_picture.description == updated_description
+    assert set(tag.name for tag in updated_picture.tags) == set(updated_tags)
+
+
+async def test_update_picture_unauthorized(db: AsyncSession, test_picture: Picture, other_user: User):
+    updated_description = "Unauthorized update"
+    updated_tags = ["unauth_tag1", "unauth_tag2"]
+    updated_picture = await PictureRepository.update_picture(
+        picture_id=test_picture.id,
+        update_description=updated_description,
+        update_tags=updated_tags,
+        user=other_user,
+        db=db
+    )
+    assert updated_picture is None
+
+
+
 async def test_search_pictures(db: AsyncSession, test_picture: Picture):
     pictures = await PictureRepository.search_pictures(db=db, search_term="Test", page=1, page_size=10)
     assert len(pictures) > 0
