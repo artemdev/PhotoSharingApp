@@ -129,7 +129,7 @@ async def update_picture(
     :rtype: PictureResponse
     """
     tags_list = tags[0].split(",") if tags else None
-    picture = await PictureRepository.update_picture(picture_id, description, tags_list, current_user.id, db)
+    picture = await PictureRepository.update_picture(picture_id, description, tags_list, current_user, db)
     if not picture:
         raise HTTPException(status_code=404, detail="Picture not found")
     return picture

@@ -6,11 +6,9 @@ from sqlalchemy.orm import selectinload, joinedload
 from typing import List, Optional
 from datetime import datetime
 import cloudinary.uploader
-from src.database.models import Picture, Tag
+from src.database.models import Picture, Tag, User
 import qrcode
 import io
-from PIL import Image
-
 
 
 class PictureRepository:
@@ -91,15 +89,13 @@ class PictureRepository:
         return picture
 
     @staticmethod
-
     async def update_picture(
             picture_id: int,
             update_description: Optional[str],
             update_tags: Optional[List[str]],
-            user_id: int,
+            user: User,
             db: AsyncSession
     ):
-
 
         """
         Update an existing picture by its ID and user ID.
@@ -110,11 +106,11 @@ class PictureRepository:
         :type update_description: Optional[str]
         :param update_tags: A list of new tags for the picture.
         :type update_tags: Optional[List[str]]
-        :param user_id: The ID of the user updating the picture.
-        :type user_id: int
+        :param user: The user updating the picture.
+        :type user: User
         :param db: The database session.
         :type db: AsyncSession
-        :return: The updated picture, or None if it does not exist.
+        :return: The updated picture, or None if it does not exist or user is not authorised.
         :rtype: Optional[Picture]
         """
 
@@ -124,11 +120,14 @@ class PictureRepository:
             picture_result = await db.execute(
                 select(Picture)
                 .options(selectinload(Picture.tags))
-                .filter(Picture.id == picture_id, Picture.user_id == user_id)
+                .filter(Picture.id == picture_id)
             )
             picture = picture_result.scalars().one_or_none()
 
             if not picture:
+                return None
+            # Check if the user is the owner or an admin
+            if picture.user_id != user.id and user.role != 'admin':
                 return None
 
                 # Update the description if provided
@@ -338,7 +337,6 @@ class PictureRepository:
 
         return [tag.name for tag in picture.tags]
 
-      
     @staticmethod
     async def delete_picture(picture_id: int, db: AsyncSession):
         """
@@ -359,7 +357,6 @@ class PictureRepository:
         await db.commit()
 
         return picture
-
 
     @staticmethod
     async def create_qrcode(picture_id: int, db: AsyncSession):
@@ -389,4 +386,3 @@ class PictureRepository:
         await db.refresh(picture)
 
         return picture
-
