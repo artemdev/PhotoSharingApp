@@ -6,7 +6,7 @@ from src.database.db import get_db
 from src.schemas.comments import CommentCreate, CommentUpdate, CommentOut
 from src.services.auth import auth_service
 from src.repository.comments import CommentRepository
-from src.database.models import User, Comment
+from src.database.models import User, Comment, Role
 from src.services.user import RoleAccess
 
 router = APIRouter(prefix='/comments', tags=['comments'])
@@ -34,7 +34,7 @@ async def update_comment(comment_id: int, comment: CommentUpdate, db: AsyncSessi
     return updated_comment
 
 
-@router.delete("/comments/{comment_id}", dependencies=[Depends(RoleAccess(['admin', 'moderator']))])
+@router.delete("/comments/{comment_id}", dependencies=[Depends(RoleAccess([Role.admin, Role.moderator]))])
 async def delete_comment(comment_id: int, db: AsyncSession = Depends(get_db)):
     await CommentRepository.delete_comment(db, comment_id)
     return {"message": "Comment deleted"}
