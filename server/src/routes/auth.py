@@ -1,8 +1,11 @@
 from fastapi import APIRouter, HTTPException, Depends, status, BackgroundTasks, Request
 from fastapi.security import OAuth2PasswordRequestForm, HTTPAuthorizationCredentials, HTTPBearer
+from sqlalchemy import select
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.database.db import get_db
+from src.database.models import User, Role
 from src.repository import users as repository_users
 from src.schemas.user import UserSchema, TokenSchema, UserResponse, RequestEmail
 from src.services.auth import auth_service
@@ -24,16 +27,48 @@ async def signup(body: UserSchema, bt: BackgroundTasks, request: Request, db: As
     :return: Newly created UserResponse object.
     """
     try:
+        print(f"Received signup request for email: {body.email}")
         exist_user = await repository_users.get_user_by_email(body.email, db)
         if exist_user:
+            print(f"User with email {body.email} already exists.")
             raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Account already exists")
+
+        result = await db.execute(select(User))
+        users = result.scalars().all()
+
+        role = Role.admin if not users else Role.user
+
         body.password = auth_service.get_password_hash(body.password)
-        new_user = await repository_users.create_user(body, db)
+
+        new_user = User(
+            username=body.username,
+            email=body.email,
+            password=body.password,
+            role=role
+        )
+        db.add(new_user)
+        await db.commit()
+        await db.refresh(new_user)
+
         bt.add_task(send_email, new_user.email, new_user.username, str(request.base_url))
-        return new_user
+
+        return UserResponse(
+            id=new_user.id,
+            username=new_user.username,
+            email=new_user.email,
+            avatar=new_user.avatar,
+            role=new_user.role,
+            registered_at=new_user.created_at.strftime("%Y-%m-%d %H:%M:%S"),
+            num_photos=0
+        )
 
     except HTTPException as e:
+        print(f"HTTPException occurred: {e.detail}")
         raise e
+    except SQLAlchemyError as e:
+        await db.rollback()
+        print(f"Database error: {e}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Database error: " + str(e))
     except Exception as e:
         print(f"Unexpected error occurred: {e}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")
@@ -147,4 +182,4 @@ async def request_email(body: RequestEmail, background_tasks: BackgroundTasks, r
         return {"message": "Your email is already confirmed"}
     if user:
         background_tasks.add_task(send_email, user.email, user.username, str(request.base_url))
-    return {"message": "Check your email for confirmation."}
+    return {"message": "Check your email for confirmation"}

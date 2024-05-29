@@ -1,10 +1,9 @@
 import asyncio
-
 import pytest
 import pytest_asyncio
 from fastapi.testclient import TestClient
 from sqlalchemy.pool import StaticPool
-from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
+from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
 
 from main import app
 from src.database.models import Base, User
@@ -33,6 +32,11 @@ def init_models_wrap():
             current_user = User(username=test_user["username"], email=test_user["email"], password=hash_password,
                                 confirmed=True, role="admin")
             session.add(current_user)
+
+            # Додаємо користувача з підтвердженою електронною адресою
+            confirmed_user = User(username="confirmed_user", email="confirmed@gmail.com", password=hash_password,
+                                  confirmed=True, role="user")
+            session.add(confirmed_user)
             await session.commit()
 
     asyncio.run(init_models())
@@ -41,16 +45,9 @@ def init_models_wrap():
 @pytest.fixture(scope="module")
 def client():
     # Dependency override
-
     async def override_get_db():
-        session = TestingSessionLocal()
-        try:
+        async with TestingSessionLocal() as session:
             yield session
-        except Exception as err:
-            print(err)
-            await session.rollback()
-        finally:
-            await session.close()
 
     app.dependency_overrides[get_db] = override_get_db
 

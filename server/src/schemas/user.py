@@ -27,12 +27,14 @@ class UserOut(BaseModel):
     role: Role
     avatar: Optional[str] = None
 
-    class Config:
-        from_attributes = True
-
 
 class UserRoleUpdate(BaseModel):
     role: Role
+
+
+class UserGet(UserResponse):
+    registered_at: str
+    num_photos: int
 
 
 class TokenSchema(BaseModel):
@@ -43,3 +45,5 @@ class TokenSchema(BaseModel):
 
 class RequestEmail(BaseModel):
     email: EmailStr
+
+

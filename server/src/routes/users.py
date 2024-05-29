@@ -10,10 +10,12 @@ from fastapi import (
 )
 from fastapi_limiter.depends import RateLimiter
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import func, select
 
 from src.database.db import get_db
-from src.database.models import User
-from src.schemas.user import UserResponse
+from src.database.models import User, Picture
+from src.repository.users import get_user_photo_count
+from src.schemas.user import UserGet, UserResponse
 from src.services.auth import auth_service
 from src.conf.config import config
 from src.repository import users as repositories_users
@@ -31,17 +33,31 @@ cloudinary.config(
 
 @router.get(
     "/me",
-    response_model=UserResponse,
+    response_model=UserGet,
     dependencies=[Depends(RateLimiter(times=1, seconds=20))],
 )
-async def get_current_user(user: User = Depends(auth_service.get_current_user)):
+async def get_current_user(
+        user: User = Depends(auth_service.get_current_user),
+        db: AsyncSession = Depends(get_db)
+):
     """
     Retrieves the current user.
 
     :param user: User object retrieved from authentication service.
+    :param db: AsyncSession instance for database interaction.
     :return: UserResponse containing user details.
     """
-    return user
+    num_photos = await get_user_photo_count(user.id, db)
+
+    return UserGet(
+        id=user.id,
+        username=user.username,
+        email=user.email,
+        avatar=user.avatar,
+        role=user.role,
+        registered_at=user.created_at.strftime("%Y-%m-%d %H:%M:%S"),
+        num_photos=num_photos,
+    )
 
 
 @router.patch(
@@ -49,10 +65,10 @@ async def get_current_user(user: User = Depends(auth_service.get_current_user)):
     response_model=UserResponse,
     dependencies=[Depends(RateLimiter(times=1, seconds=20))],
 )
-async def get_current_user(
+async def update_user_avatar(
         file: UploadFile = File(),
         user: User = Depends(auth_service.get_current_user),
-        db: AsyncSession = Depends(get_db),
+        db: AsyncSession = Depends(get_db)
 ):
     """
     Updates the current user's avatar.
@@ -64,7 +80,6 @@ async def get_current_user(
     """
     public_id = f"App id №{user.email}"
     res = cloudinary.uploader.upload(file.file, public_id=public_id, overwrite=True)
-    print(res)
     res_url = cloudinary.CloudinaryImage(public_id).build_url(
         width=250, height=250, crop="fill", version=res.get("version")
     )

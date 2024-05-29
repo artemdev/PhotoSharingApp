@@ -7,7 +7,7 @@ from libgravatar import Gravatar
 from typing import List
 
 from src.database.db import get_db
-from src.database.models import User, Role
+from src.database.models import User, Role, Picture
 from src.schemas.user import UserSchema
 
 
@@ -142,3 +142,12 @@ async def update_user_role(user_id: int, new_role: Role, db: AsyncSession = Depe
     except SQLAlchemyError as e:
         await db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
+
+async def get_user_photo_count(user_id: int, db: AsyncSession):
+    """
+    Returns the count of photos belonging to a user.
+    """
+    stmt = select(func.count()).where(Picture.user_id == user_id)
+    result = await db.execute(stmt)
+    return result.scalar()
