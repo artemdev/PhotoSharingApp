@@ -273,7 +273,7 @@ async def get_tags(
 async def create_qrcode(picture_id: int, db: AsyncSession = Depends(get_db),
                         current_user: User = Depends(auth_service.get_current_user)):
 
-    picture = await db.execute(select(Picture).where(Picture.id == picture_id).first())
+    picture = await db.execute(select(Picture).where(Picture.id == picture_id))
     picture = picture.scalar()
     if picture.user_id != current_user.id or current_user.role.name != 'admin':
         raise HTTPException(status_code=403, detail="Not enough permissions")
