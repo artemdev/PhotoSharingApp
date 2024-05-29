@@ -277,7 +277,7 @@ async def create_qrcode(picture_id: int, db: AsyncSession = Depends(get_db),
     picture = picture.scalar()
     if picture.user_id != current_user.id or current_user.role.name != 'admin':
         raise HTTPException(status_code=403, detail="Not enough permissions")
-
+        
     picture = await PictureRepository.create_qrcode(picture_id, db)
     if not picture:
         raise HTTPException(status_code=404, detail="Picture not found")
