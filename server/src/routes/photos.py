@@ -1,10 +1,11 @@
-from src.database.models import User, Picture
+from src.database.models import User, Picture, Role
 from src.repository.photos import PictureRepository
 from fastapi import UploadFile, File, Form
 import logging
 from fastapi import APIRouter, HTTPException, Query, Depends
 from typing import Optional, List
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
 from src.database.db import get_db
 from src.services.auth import auth_service
 from src.schemas.photos import PictureUpload, PictureResponse
@@ -159,6 +160,12 @@ async def delete_picture(picture_id: int, db: AsyncSession = Depends(get_db),
     Raises:
     HTTPException: If the picture is not found.
     """
+
+    picture = await db.execute(select(Picture).filter(Picture.id == picture_id))
+    picture = picture.scalar()
+    if picture.user_id != current_user.id or current_user.role.name != 'admin':
+        raise HTTPException(status_code=403, detail="Not enough permissions")
+
     picture = await PictureRepository.delete_picture(picture_id, db)
     if not picture:
         raise HTTPException(status_code=404, detail="Picture not found")
@@ -265,6 +272,12 @@ async def get_tags(
 @router.post("/{picture_id}/qrcode", response_model=PictureResponse)
 async def create_qrcode(picture_id: int, db: AsyncSession = Depends(get_db),
                         current_user: User = Depends(auth_service.get_current_user)):
+
+    picture = await db.execute(select(Picture).where(Picture.id == picture_id).first())
+    picture = picture.scalar()
+    if picture.user_id != current_user.id or current_user.role.name != 'admin':
+        raise HTTPException(status_code=403, detail="Not enough permissions")
+        
     picture = await PictureRepository.create_qrcode(picture_id, db)
     if not picture:
         raise HTTPException(status_code=404, detail="Picture not found")
