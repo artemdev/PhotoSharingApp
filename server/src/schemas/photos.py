@@ -14,6 +14,7 @@ class PictureUpload(BaseModel):
 class PictureResponse(BaseModel):
     id: int
     image_url: str
+    qr_code_url: str
     description: Optional[str]
     user_id: int
     # tags: Optional[List[]]

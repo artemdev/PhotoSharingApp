@@ -44,7 +44,8 @@ async def search_pictures(
     :rtype: List[PictureResponse]
     """
 
-    pictures = await PictureRepository.search_pictures(db=db, search_term=search_term, tag=tag, user_id=user_id, page=page, page_size=page_size)
+    pictures = await PictureRepository.search_pictures(db=db, search_term=search_term, tag=tag, user_id=user_id,
+                                                       page=page, page_size=page_size)
 
     return pictures
 
@@ -136,7 +137,6 @@ async def update_picture(
     if not picture:
         raise HTTPException(status_code=404, detail="Picture not found")
     return picture
-
 
 
 @router.delete("/{picture_id}", response_model=PictureResponse)
@@ -235,7 +235,6 @@ async def overlay_image(
     return picture
 
 
-  
 @router.get("/{picture_id}/tags", response_model=List[str])
 async def get_tags(
 
@@ -243,7 +242,6 @@ async def get_tags(
         db: AsyncSession = Depends(get_db),
         current_user: User = Depends(auth_service.get_current_user)
 ):
-
     """
     Route handler for retrieving the tags of a specific picture.
 
@@ -264,11 +262,9 @@ async def get_tags(
     return tags
 
 
-  
 @router.post("/{picture_id}/qrcode", response_model=PictureResponse)
 async def create_qrcode(picture_id: int, db: AsyncSession = Depends(get_db),
-                     current_user: User = Depends(auth_service.get_current_user)):
-  
+                        current_user: User = Depends(auth_service.get_current_user)):
     picture = await PictureRepository.create_qrcode(picture_id, db)
     if not picture:
         raise HTTPException(status_code=404, detail="Picture not found")
@@ -284,4 +280,3 @@ async def get_qrcode(picture_id: int, db: AsyncSession = Depends(get_db),
         raise HTTPException(status_code=404, detail="Picture not found")
 
     return picture.qr_code_url
-
